@@ -1,0 +1,15 @@
+# PDFs cargados
+pdfs/*
+!pdfs/.gitkeep
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Croquis - Gestión de PDFs</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🗺️ Mapa de Croquis</h1>
+                <p>Gestión de coordenadas y PDFs</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="document.getElementById('excelFile').click()">
+                    📥 Cargar Excel/CSV
+                </button>
+                <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="display:none;">
+                <button class="btn btn-secondary" onclick="exportarDatos()">
+                    📤 Exportar Datos
+                </button>
+            </div>
+        </header>
+
+        <!-- Contenido principal -->
+        <div class="main-content">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h3>📋 Registros Cargados</h3>
+                    <span class="badge" id="totalRegistros">0</span>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Buscar código..." onkeyup="filtrarRegistros()">
+                </div>
+                <div class="registros-list" id="registrosList">
+                    <p class="empty-state">Carga un archivo para ver registros</p>
+                </div>
+            </aside>
+
+            <!-- Mapa -->
+            <div class="map-container">
+                <div id="map" class="map"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para detalles -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle"></h2>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- Modal para gestionar PDFs -->
+    <div id="pdfModal" class="modal">
+        <div class="modal-content modal-pdf">
+            <span class="close" onclick="cerrarPdfModal()">&times;</span>
+            <h2>📁 Gestionar PDFs</h2>
+            <div id="pdfModalBody"></div>
+        </div>
+    </div>
+
+    <!-- Panel flotante de detalles -->
+    <div id="detailsPanel" class="details-panel">
+        <button class="close-panel" onclick="cerrarPanel()">✕</button>
+        <div id="panelContent"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
