@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visor de Esquineros — SEDAPAL</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#eef1f7;--surface:#fff;--surface2:#f5f7fb;
+  --border:#dde3ee;--border2:#c4cce0;
+  --blue:#1a4fc4;--blue2:#2563eb;--blue-light:#dbeafe;--blue-mid:#3b6fd4;
+  --teal:#0f766e;--teal-light:#ccfbf1;
+  --amber:#b45309;--amber-light:#fef3c7;
+  --red:#b91c1c;--red-light:#fee2e2;
+  --green:#15803d;--green-light:#dcfce7;
+  --violet:#6d28d9;--violet-light:#ede9fe;
+  --text:#111827;--text2:#374151;--text3:#6b7280;--text4:#9ca3af;
+  --r:10px;--rs:6px;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* HEADER */
+header{background:var(--blue);padding:0 18px;height:52px;display:flex;align-items:center;gap:12px;flex-shrink:0;z-index:1000}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{width:22px;height:22px;fill:#fff;flex-shrink:0}
+.logo-text{font-size:14px;font-weight:700;color:#fff;letter-spacing:.2px}
+.logo-sep{color:rgba(255,255,255,.4);font-size:13px}
+.logo-sub{font-size:12px;color:rgba(255,255,255,.75)}
+header .spacer{flex:1}
+.hbtn{display:flex;align-items:center;gap:6px;padding:6px 13px;border-radius:var(--rs);border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);font-size:12px;font-weight:500;cursor:pointer;color:#fff;transition:all .15s}
+.hbtn:hover{background:rgba(255,255,255,.22)}
+.hbtn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+.stat-chip{background:rgba(255,255,255,.18);color:#fff;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.25)}
+.stat-chip span{opacity:.75;font-weight:400}
+.server-badge{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.server-badge.on{background:#22c55e}
+.server-badge.off{background:#f59e0b}
+
+/* LAYOUT */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:340px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.stabs{display:flex;border-bottom:1px solid var(--border)}
+.stab{flex:1;padding:10px 6px;font-size:11px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .15s;text-transform:uppercase;letter-spacing:.4px}
+.stab.on{color:var(--blue2);border-bottom-color:var(--blue2);background:var(--blue-light)}
+.spanel{display:none;flex:1;flex-direction:column;overflow:hidden}
+.spanel.on{display:flex}
+
+/* UPLOAD PANEL */
+.upsec{padding:14px}
+.dropzone{border:2px dashed var(--border2);border-radius:var(--r);padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2)}
+.dropzone:hover,.dropzone.drag{border-color:var(--blue2);background:var(--blue-light)}
+.dz-icon{width:38px;height:38px;margin:0 auto 10px;background:var(--blue-light);border-radius:9px;display:flex;align-items:center;justify-content:center}
+.dz-icon svg{width:20px;height:20px;stroke:var(--blue2);fill:none;stroke-width:1.8}
+.dz-label{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:3px}
+.dz-hint{font-size:11px;color:var(--text3)}
+#excel-input{display:none}
+.info-box{margin:10px 14px 0;background:var(--blue-light);border-radius:var(--rs);padding:10px 12px;font-size:11.5px;color:var(--blue);display:none}
+.info-box b{font-weight:600}
+.faq{padding:10px 14px;font-size:11px;color:var(--text3);line-height:1.7}
+.faq b{color:var(--text2);font-weight:600}
+
+/* RECORDS */
+.sbar{padding:9px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sinput{width:100%;padding:7px 10px 7px 30px;font-size:12px;border:1px solid var(--border2);border-radius:var(--rs);background:var(--surface2);color:var(--text);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:8px center}
+.sinput:focus{outline:none;border-color:var(--blue2)}
+.rlist{flex:1;overflow-y:auto}
+.ritem{padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:flex-start;gap:9px;transition:background .1s}
+.ritem:hover{background:var(--surface2)}
+.ritem.on{background:var(--blue-light)}
+.ri-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.ri-ico.def{background:var(--blue-light)}
+.ri-ico.haspdf{background:var(--green-light)}
+.ri-ico.hasimg{background:var(--violet-light)}
+.ri-ico.both{background:linear-gradient(135deg,var(--green-light) 50%,var(--violet-light) 50%)}
+.ri-ico svg{width:16px;height:16px;fill:none;stroke-width:1.8}
+.def svg{stroke:var(--blue2)}
+.haspdf svg{stroke:var(--green)}
+.hasimg svg{stroke:var(--violet)}
+.both svg{stroke:var(--green)}
+.ri-body{flex:1;min-width:0}
+.ri-cod{font-size:12.5px;font-weight:700;color:var(--text)}
+.ri-meta{font-size:11px;color:var(--text3);margin-top:1px}
+.badges{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.badge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600}
+.b-cad{background:var(--blue-light);color:var(--blue)}
+.b-img{background:var(--violet-light);color:var(--violet)}
+.b-pdf{background:var(--green-light);color:var(--green)}
+.b-no{background:var(--bg);color:var(--text4);border:1px solid var(--border)}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;color:var(--text3)}
+.empty svg{width:44px;height:44px;stroke:var(--border2);fill:none;stroke-width:1.2;margin-bottom:10px}
+.empty p{font-size:12px;text-align:center;line-height:1.6}
+
+/* PDF PANEL */
+.pnone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text3);gap:8px;padding:24px}
+.pnone svg{width:44px;height:44px;stroke:var(--border2);fill:none;stroke-width:1.2}
+.pnone p{font-size:12px;text-align:center;line-height:1.6}
+.ppanel{flex:1;overflow-y:auto;padding:14px;display:none;flex-direction:column;gap:12px}
+.psel-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:11px 13px}
+.psel-cod{font-size:14px;font-weight:700;color:var(--blue)}
+.psel-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.img-link-card{background:var(--violet-light);border:1px solid #ddd6fe;border-radius:var(--rs);padding:10px 12px;display:flex;align-items:center;gap:8px}
+.img-link-card svg{width:16px;height:16px;stroke:var(--violet);fill:none;stroke-width:1.8;flex-shrink:0}
+.img-link-card a{font-size:12px;color:var(--violet);font-weight:600;text-decoration:none;word-break:break-all}
+.img-link-card a:hover{text-decoration:underline}
+.pdrop{border:2px dashed var(--border2);border-radius:var(--rs);padding:16px;text-align:center;cursor:pointer;transition:all .15s;background:var(--surface2)}
+.pdrop:hover,.pdrop.drag{border-color:var(--green);background:var(--green-light)}
+.pdrop-lbl{font-size:12.5px;color:var(--text2);font-weight:600}
+.pdrop-hint{font-size:11px;color:var(--text3);margin-top:3px}
+#pdf-input{display:none}
+.plist{display:flex;flex-direction:column;gap:7px}
+.pitem{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px}
+.pitem-ico{width:26px;height:26px;background:var(--red-light);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pitem-ico svg{width:14px;height:14px;stroke:var(--red);fill:none;stroke-width:1.8}
+.pitem-name{flex:1;font-size:11.5px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pitem-kb{font-size:10.5px;color:var(--text3)}
+.ibtn{width:26px;height:26px;border:1px solid var(--border2);border-radius:5px;background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.ibtn:hover{background:var(--bg)}
+.ibtn.del:hover{background:var(--red-light);border-color:#fca5a5}
+.ibtn svg{width:13px;height:13px;stroke:var(--text3);fill:none;stroke-width:1.8}
+.ibtn.del svg{stroke:var(--red)}
+.no-pdf-msg{text-align:center;padding:14px;color:var(--text4);font-size:11.5px}
+.sec-title{font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+
+/* MAP */
+#map{flex:1;z-index:1}
+
+/* LEAFLET POPUP */
+.leaflet-popup-content-wrapper{border-radius:10px!important;box-shadow:0 6px 24px rgba(0,0,0,.18)!important;padding:0!important;overflow:hidden;min-width:260px}
+.leaflet-popup-content{margin:0!important}
+.ph{background:var(--blue);padding:10px 14px}
+.ph-cod{font-size:13px;font-weight:700;color:#fff}
+.ph-lam{font-size:11px;color:rgba(255,255,255,.75);margin-top:2px}
+.pb{padding:11px 14px;background:#fff}
+.pr{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;gap:8px}
+.pr:last-child{margin-bottom:0}
+.pk{color:#6b7280}
+.pv{font-weight:600;color:#111827;text-align:right}
+hr.pd{border:none;border-top:1px solid #e5e7eb;margin:10px 0}
+.psec{padding:0 14px 12px;background:#fff}
+.psec-t{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:6px}
+.pimg-btn{display:flex;align-items:center;gap:6px;padding:7px 10px;background:#ede9fe;border:1px solid #ddd6fe;border-radius:6px;font-size:11.5px;color:#6d28d9;cursor:pointer;text-decoration:none;margin-bottom:5px;transition:all .1s;font-weight:600}
+.pimg-btn:hover{background:#ddd6fe}
+.pimg-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
+.ppdf-link{display:flex;align-items:center;gap:6px;padding:6px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:11.5px;color:#15803d;cursor:pointer;margin-bottom:4px;font-weight:600;transition:all .1s}
+.ppdf-link:hover{background:#dcfce7}
+.ppdf-link svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
+.pno{font-size:11.5px;color:#9ca3af;display:flex;align-items:center;gap:5px;padding:3px 0}
+.pno svg{width:13px;height:13px;stroke:#d1d5db;fill:none;stroke-width:1.8}
+.pup-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:7px;background:#f0fdf4;border:1px dashed #86efac;border-radius:6px;font-size:11.5px;color:#15803d;cursor:pointer;margin-top:6px;font-weight:500;transition:all .1s}
+.pup-btn:hover{background:#dcfce7}
+.pup-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;padding:9px 15px;border-radius:8px;font-size:12.5px;z-index:9999;opacity:0;transform:translateY(6px);transition:all .22s;pointer-events:none;font-weight:500}
+.toast.show{opacity:1;transform:translateY(0)}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:#d0d5e0;border-radius:2px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+    <span class="logo-text">Visor Esquineros</span>
+    <span class="logo-sep">|</span>
+    <span class="logo-sub">SEDAPAL — Gestión Catastral</span>
+  </div>
+  <div class="spacer"></div>
+  <div class="stat-chip"><span class="server-badge on" id="server-badge"></span><span>Servidor: </span><span id="server-status">Detectando...</span></div>
+  <div id="stat-total" class="stat-chip" style="margin-right:6px"><span>Predios: </span>0</div>
+  <div id="stat-pdf" class="stat-chip" style="margin-right:10px"><span>Con PDF: </span>0</div>
+  <button class="hbtn" onclick="document.getElementById('excel-input').click()">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    Cargar Excel
+  </button>
+</header>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="stabs">
+      <button class="stab on" onclick="tab('info')">📂 Cargar</button>
+      <button class="stab" onclick="tab('list')">📋 Predios</button>
+      <button class="stab" onclick="tab('pdfs')">📄 PDFs</button>
+    </div>
+
+    <!-- TAB INFO -->
+    <div class="spanel on" id="t-info">
+      <div class="upsec">
+        <div class="dropzone" id="dz" onclick="document.getElementById('excel-input').click()" ondrop="onXlsDrop(event)" ondragover="ev=>ev.preventDefault()" ondragenter="this.classList.add('drag')" ondragleave="this.classList.remove('drag')">
+          <div class="dz-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg></div>
+          <div class="dz-label">Cargar archivo Excel</div>
+          <div class="dz-hint">.xlsx — Arrastra o haz clic aquí</div>
+        </div>
+        <input type="file" id="excel-input" accept=".xlsx,.xls" onchange="loadXls(this.files[0])">
+      </div>
+      <div class="info-box" id="ibox"></div>
+      <div class="faq">
+        <b>Columnas esperadas:</b><br>
+        <code>cod_cad</code> · <code>x</code> (Este UTM) · <code>y</code> (Norte UTM) · <code>lamina</code> · <code>Cuadrante</code> · <code>Secuencial</code> · <code>Imagen</code> (URL) · <code>cd_imagen</code><br><br>
+        <b>Coordenadas:</b> Sistema UTM WGS-84 Zona 18S (EPSG:32718)<br><br>
+        <b>PDFs:</b> Se crean carpetas por <code>cod_cad</code> en <code>pdfs/</code>
+      </div>
+    </div>
+
+    <!-- TAB LIST -->
+    <div class="spanel" id="t-list">
+      <div class="sbar">
+        <input class="sinput" id="sinput" placeholder="Buscar por código, lámina..." oninput="filterList(this.value)">
+      </div>
+      <div class="rlist" id="rlist">
+        <div class="empty">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <p>Carga un archivo Excel para ver los predios</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB PDFs -->
+    <div class="spanel" id="t-pdfs">
+      <div class="pnone" id="pnone">
+        <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        <p>Selecciona un predio en el mapa o en la lista para gestionar sus archivos PDF</p>
+      </div>
+      <div class="ppanel" id="ppanel">
+        <div class="psel-card">
+          <div class="psel-cod" id="pp-cod">—</div>
+          <div class="psel-meta" id="pp-meta">—</div>
+        </div>
+        <div>
+          <div class="sec-title" style="margin-bottom:6px">🖼️ Imagen del sistema</div>
+          <div class="img-link-card" id="pp-imgcard">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <a id="pp-imglink" href="#" target="_blank">—</a>
+          </div>
+        </div>
+        <div>
+          <div class="sec-title" style="margin-bottom:6px">📎 Subir PDFs a esta carpeta</div>
+          <div class="pdrop" id="pdrop" onclick="document.getElementById('pdf-input').click()" ondrop="onPdfDrop(event)" ondragover="ev=>ev.preventDefault()" ondragenter="this.classList.add('drag')" ondragleave="this.classList.remove('drag')">
+            <div class="pdrop-lbl">Agregar archivo PDF</div>
+            <div class="pdrop-hint">Arrastra o haz clic · Se puede subir más de uno</div>
+          </div>
+          <input type="file" id="pdf-input" accept=".pdf" multiple onchange="addPdfs(this.files)">
+        </div>
+        <div>
+          <div class="sec-title" style="margin-bottom:6px">📁 Archivos en carpeta</div>
+          <div class="plist" id="plist"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="map"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const CFG = {
+  excelPath: 'datos/datos.xlsx',
+  apiBase: 'api'
+};
+
+// ── UTM 18S → WGS84 ───────────────────────────────────────────────────────────
+function utm18sToLatLon(E, N) {
+  const a=6378137, f=1/298.257223563;
+  const b=a*(1-f), e2=1-(b*b)/(a*a), ep2=e2/(1-e2);
+  const k0=0.9996, E0=500000, N0=10000000, lon0=-75*(Math.PI/180);
+  const M = (N-N0)/k0;
+  const mu = M/(a*(1-e2/4-3*e2*e2/64-5*e2*e2*e2/256));
+  const e1 = (1-Math.sqrt(1-e2))/(1+Math.sqrt(1-e2));
+  const phi1 = mu+(3*e1/2-27*e1*e1*e1/32)*Math.sin(2*mu)+(21*e1*e1/16-55*e1*e1*e1*e1/32)*Math.sin(4*mu)+(151*e1*e1*e1/96)*Math.sin(6*mu);
+  const N1=a/Math.sqrt(1-e2*Math.sin(phi1)*Math.sin(phi1));
+  const T1=Math.tan(phi1)*Math.tan(phi1);
+  const C1=ep2*Math.cos(phi1)*Math.cos(phi1);
+  const R1=a*(1-e2)/Math.pow(1-e2*Math.sin(phi1)*Math.sin(phi1),1.5);
+  const D=(E-E0)/(N1*k0);
+  const lat=phi1-(N1*Math.tan(phi1)/R1)*(D*D/2-(5+3*T1+10*C1-4*C1*C1-9*ep2)*D*D*D*D/24+(61+90*T1+298*C1+45*T1*T1-252*ep2-3*C1*C1)*D*D*D*D*D*D/720);
+  const lon=lon0+(D-(1+2*T1+C1)*D*D*D/6+(5-2*C1+28*T1-3*C1*C1+8*ep2+24*T1*T1)*D*D*D*D*D/120)/Math.cos(phi1);
+  return [lat*180/Math.PI, lon*180/Math.PI];
+}
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+const S = {
+  records: [], pdfs: {}, sel: null,
+  map: null, lg: null, serverMode: false
+};
+
+// ── MAP ──────────────────────────────────────────────────────────────────────
+S.map = L.map('map').setView([-11.955, -77.009], 17);
+const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19});
+const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:19});
+osm.addTo(S.map);
+L.control.layers({'Mapa base':osm,'Satélite':sat}).addTo(S.map);
+S.lg = L.layerGroup().addTo(S.map);
+
+// ── DETECT SERVER ────────────────────────────────────────────────────────────
+async function detectServerMode() {
+  try {
+    const r = await fetch(`${CFG.apiBase}/ping.php`);
+    if (r.ok) {
+      S.serverMode = true;
+      document.getElementById('server-badge').style.background = '#22c55e';
+      document.getElementById('server-status').textContent = 'Conectado ✓';
+      return true;
+    }
+  } catch(e) {}
+  S.serverMode = false;
+  document.getElementById('server-badge').style.background = '#f59e0b';
+  document.getElementById('server-status').textContent = 'Local (sin servidor)';
+  return false;
+}
+
+// ── AUTO LOAD EXCEL ──────────────────────────────────────────────────────────
+async function autoLoadExcel() {
+  try {
+    const r = await fetch(CFG.excelPath);
+    if (!r.ok) throw new Error('No encontrado');
+    const buf = await r.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+    if (rows.length) {
+      processRows(rows);
+      toast(`✓ Auto-cargado: ${S.records.length} predios desde datos/datos.xlsx`);
+    }
+  } catch(e) {
+    toast('⚠ Coloca el Excel en datos/datos.xlsx', 'warn');
+  }
+}
+
+// ── LOAD ALL PDFS FROM SERVER ────────────────────────────────────────────────
+async function loadAllPdfsFromServer() {
+  if (!S.serverMode) return;
+  try {
+    const r = await fetch(`${CFG.apiBase}/list_all.php`);
+    const j = await r.json();
+    if (j.ok) {
+      S.pdfs = j.pdfs || {};
+      S.records.forEach(r => refreshMarker(r.cod));
+      renderList();
+      updateStats();
+    }
+  } catch(e) {}
+}
+
+// ── TABS ─────────────────────────────────────────────────────────────────────
+function tab(name) {
+  const tabs=['info','list','pdfs'];
+  document.querySelectorAll('.stab').forEach((b,i)=>b.classList.toggle('on',tabs[i]===name));
+  document.querySelectorAll('.spanel').forEach((p,i)=>p.classList.toggle('on',['t-info','t-list','t-pdfs'][i]==='t-'+name));
+}
+
+// ── EXCEL LOAD ───────────────────────────────────────────────────────────────
+function onXlsDrop(e){e.preventDefault();document.getElementById('dz').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)loadXls(f);}
+function loadXls(file){
+  if(!file)return;
+  const r=new FileReader();
+  r.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      if(!rows.length){toast('El archivo está vacío','warn');return;}
+      processRows(rows);
+      toast(`✓ Excel cargado: ${S.records.length} predios únicos`);
+    }catch(err){toast('✕ Error al leer el archivo','error');console.error(err);}
+  };
+  r.readAsArrayBuffer(file);
+}
+
+function processRows(rows){
+  const seen=new Set();
+  const unique=[];
+  rows.forEach(r=>{const k=String(r.cod_cad||'').trim();if(k&&!seen.has(k)){seen.add(k);unique.push(r);}});
+
+  S.lg.clearLayers();
+  S.records=[];
+  const bounds=[];
+
+  unique.forEach(row=>{
+    const cod=String(row.cod_cad||'').trim();
+    const x=parseFloat(row.x);
+    const y=parseFloat(row.y);
+    if(!cod||isNaN(x)||isNaN(y))return;
+
+    const [lat,lon]=utm18sToLatLon(x,y);
+    const lamina=String(row.lamina||'');
+    const cuadrante=String(row.Cuadrante||'');
+    const sec=String(row.Secuencial||'');
+    const cdImagen=String(row.cd_imagen||'');
+    const imgUrl=String(row.Imagen||'');
+
+    const marker=L.circleMarker([lat,lon],markerStyle(cod));
+    marker.on('click',()=>selectRec(cod));
+    marker.bindPopup(()=>makePopup(cod),{maxWidth:310,minWidth:260});
+
+    S.lg.addLayer(marker);
+    S.records.push({cod,lat,lon,lamina,cuadrante,sec,cdImagen,imgUrl,marker});
+    bounds.push([lat,lon]);
+  });
+
+  if(bounds.length)S.map.fitBounds(bounds,{padding:[40,40],maxZoom:18});
+  renderList();
+  updateStats();
+  tab('list');
+
+  const ibox=document.getElementById('ibox');
+  ibox.style.display='block';
+  ibox.innerHTML=`<b>${S.records.length}</b> predios cargados · <b>${rows.length}</b> filas en Excel`;
+}
+
+function markerStyle(cod){
+  const hasPdf=!!(S.pdfs[cod]?.length);
+  const rec=S.records.find(r=>r.cod===cod);
+  const hasImg=!!(rec?.imgUrl);
+  return{
+    radius:9,
+    color: hasPdf?'#15803d':'#1a4fc4',
+    fillColor: hasPdf?'#22c55e': hasImg?'#7c3aed':'#3b6fd4',
+    fillOpacity:.85,weight:2.5
+  };
+}
+
+// ── POPUP ────────────────────────────────────────────────────────────────────
+function makePopup(cod){
+  const rec=S.records.find(r=>r.cod===cod);
+  if(!rec)return'';
+  const pdfs=S.pdfs[cod]||[];
+  const imgBtn=rec.imgUrl
+    ?`<a class="pimg-btn" href="${rec.imgUrl}" target="_blank"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Ver croquis en SEDAPAL</a>`
+    :`<div class="pno"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Sin URL de imagen</div>`;
+  const pdfHtml=pdfs.length
+    ?pdfs.map((p,i)=>`<div class="ppdf-link" onclick="openPdf('${cod}',${i})"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${p.name}</div>`).join('')
+    :`<div class="pno"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Sin archivos PDF</div>`;
+
+  return `<div class="ph"><div class="ph-cod">${cod}</div><div class="ph-lam">Lámina ${rec.lamina} · Cuad. ${rec.cuadrante} · Sec. ${rec.sec}</div></div>
+<div class="pb">
+  <div class="pr"><span class="pk">cd_imagen</span><span class="pv">${rec.cdImagen}</span></div>
+  <div class="pr"><span class="pk">X (Este)</span><span class="pv">${rec.lon.toFixed(6)}</span></div>
+  <div class="pr"><span class="pk">Y (Norte)</span><span class="pv">${rec.lat.toFixed(6)}</span></div>
+</div>
+<hr class="pd">
+<div class="psec">
+  <div class="psec-t">🖼️ Imagen del sistema</div>
+  ${imgBtn}
+  <div class="psec-t" style="margin-top:10px">📁 Carpeta: ${cod}</div>
+  ${pdfHtml}
+  <button class="pup-btn" onclick="openPdfPanelFrom('${cod}')">
+    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+    Subir PDF a esta carpeta
+  </button>
+</div>`;
+}
+
+// ── SELECT ────────────────────────────────────────────────────────────────────
+function selectRec(cod){
+  S.sel=cod;
+  const rec=S.records.find(r=>r.cod===cod);
+  document.getElementById('pnone').style.display='none';
+  const pp=document.getElementById('ppanel');
+  pp.style.display='flex';
+  document.getElementById('pp-cod').textContent=`📁 Carpeta: ${cod}`;
+  document.getElementById('pp-meta').textContent=rec?`Lámina ${rec.lamina} · Cuadrante ${rec.cuadrante} · Sec. ${rec.sec}`:''
+  if(rec&&rec.imgUrl){
+    document.getElementById('pp-imgcard').style.display='flex';
+    const a=document.getElementById('pp-imglink');
+    a.href=rec.imgUrl;
+    a.textContent='Ver imagen del croquis →';
+  } else {
+    document.getElementById('pp-imgcard').style.display='none';
+  }
+  renderPdfList();
+  document.querySelectorAll('.ritem').forEach(el=>el.classList.toggle('on',el.dataset.cod===cod));
+  document.querySelector(`.ritem[data-cod="${cod}"]`)?.scrollIntoView({block:'nearest'});
+}
+
+function openPdfPanelFrom(cod){
+  selectRec(cod);
+  tab('pdfs');
+}
+
+// ── LIST ─────────────────────────────────────────────────────────────────────
+function renderList(filter=''){
+  const fl=filter.toLowerCase();
+  const items=S.records.filter(r=>!fl||r.cod.toLowerCase().includes(fl)||r.lamina.toLowerCase().includes(fl)||r.cuadrante.toLowerCase().includes(fl)||r.sec.includes(fl));
+  const el=document.getElementById('rlist');
+  if(!items.length){
+    el.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><p>${S.records.length?'Sin resultados':'Carga un Excel primero'}</p></div>`;
+    return;
+  }
+  el.innerHTML=items.map(r=>{
+    const hasPdf=!!(S.pdfs[r.cod]?.length);
+    const hasImg=!!r.imgUrl;
+    const pdfN=(S.pdfs[r.cod]||[]).length;
+    const iconCls=hasPdf&&hasImg?'both':hasPdf?'haspdf':hasImg?'hasimg':'def';
+    return `<div class="ritem ${iconCls}" data-cod="${r.cod}" onclick="clickItem('${r.cod}')">
+      <div class="ri-ico ${iconCls}"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <div class="ri-body">
+        <div class="ri-cod">${r.cod}</div>
+        <div class="ri-meta">Lám. ${r.lamina} · Cuad. ${r.cuadrante} · Sec. ${r.sec}</div>
+        <div class="badges">
+          <span class="badge b-cad">${r.cdImagen||'—'}</span>
+          ${hasImg?'<span class="badge b-img">🖼️ Imagen</span>':''}
+          ${hasPdf?`<span class="badge b-pdf">📄 ${pdfN} PDF${pdfN>1?'s':''}</span>`:'<span class="badge b-no">Sin PDF</span>'}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function filterList(v){renderList(v);}
+function clickItem(cod){
+  const r=S.records.find(x=>x.cod===cod);
+  if(!r)return;
+  S.map.setView([r.lat,r.lon],18);
+  r.marker.openPopup();
+  selectRec(cod);
+}
+
+// ── PDFS ─────────────────────────────────────────────────────────────────────
+function onPdfDrop(e){e.preventDefault();document.getElementById('pdrop').classList.remove('drag');addPdfs(e.dataTransfer.files);}
+async function addPdfs(files){
+  if(!S.sel){toast('⚠ Selecciona un predio primero','warn');return;}
+  const arr = Array.from(files).filter(f => f.name.toLowerCase().endsWith('.pdf'));
+  if (!arr.length) return;
+
+  if (S.serverMode) {
+    const fd = new FormData();
+    fd.append('cod', S.sel);
+    arr.forEach(f => fd.append('files[]', f));
+    try {
+      const r = await fetch(`${CFG.apiBase}/upload.php`, {method:'POST', body:fd});
+      const j = await r.json();
+      if (j.ok) {
+        toast(`✓ ${j.uploaded} PDF(s) guardados en pdfs/${S.sel}/`);
+        const r2 = await fetch(`${CFG.apiBase}/list.php?cod=${S.sel}`);
+        const j2 = await r2.json();
+        if (j2.ok) {
+          S.pdfs[S.sel] = j2.files;
+          renderPdfList();
+          refreshMarker(S.sel);
+          updateStats();
+          renderList(document.getElementById('sinput').value);
+        }
+      } else {
+        toast('✕ ' + (j.error || 'Error'), 'error');
+      }
+    } catch(e) {
+      toast('✕ Error de red', 'error');
+    }
+  } else {
+    arr.forEach(f => {
+      const rd = new FileReader();
+      rd.onload = function(e){
+        if(!S.pdfs[S.sel])S.pdfs[S.sel]=[];
+        S.pdfs[S.sel].push({name:f.name,size:f.size,dataUrl:e.target.result});
+        renderPdfList();
+        refreshMarker(S.sel);
+        updateStats();
+        renderList(document.getElementById('sinput').value);
+        toast(`✓ PDF guardado: ${f.name}`);
+      };
+      rd.readAsDataURL(f);
+    });
+  }
+}
+
+function renderPdfList(){
+  const cod=S.sel;
+  const pdfs=S.pdfs[cod]||[];
+  const el=document.getElementById('plist');
+  if(!pdfs.length){
+    el.innerHTML=`<div class="no-pdf-msg">📂 Carpeta vacía · Sin archivos PDF</div>`;
+    return;
+  }
+  el.innerHTML=pdfs.map((p,i)=>`
+    <div class="pitem">
+      <div class="pitem-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <div style="flex:1;min-width:0"><div class="pitem-name">${p.name}</div><div class="pitem-kb">${(p.size/1024).toFixed(1)} KB</div></div>
+      <button class="ibtn" title="Ver" onclick="openPdf('${cod}',${i})"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      <button class="ibtn del" title="Eliminar" onclick="delPdf('${cod}',${i})"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+    </div>`).join('');
+}
+
+function openPdf(cod,i){
+  const p=(S.pdfs[cod]||[])[i];
+  if(!p)return;
+  if (p.dataUrl) {
+    const w=window.open();
+    w.document.write(`<iframe src="${p.dataUrl}" style="width:100%;height:100vh;border:none"></iframe>`);
+  } else if (p.url) {
+    window.open(p.url, '_blank');
+  }
+}
+
+async function delPdf(cod,i){
+  const p = (S.pdfs[cod]||[])[i];
+  if (!p) return;
+
+  if (S.serverMode && p.name) {
+    try {
+      const r = await fetch(`${CFG.apiBase}/delete.php`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({cod, name: p.name})
+      });
+      const j = await r.json();
+      if (!j.ok) { toast('✕ Error al eliminar', 'error'); return; }
+    } catch(e) { toast('✕ Error de red', 'error'); return; }
+  }
+
+  S.pdfs[cod].splice(i,1);
+  renderPdfList();
+  refreshMarker(cod);
+  updateStats();
+  renderList(document.getElementById('sinput').value);
+  const r=S.records.find(x=>x.cod===cod);
+  if(r&&r.marker.isPopupOpen())r.marker.openPopup();
+  toast('✓ PDF eliminado');
+}
+
+function refreshMarker(cod){
+  const r=S.records.find(x=>x.cod===cod);
+  if(!r)return;
+  r.marker.setStyle(markerStyle(cod));
+  r.marker.bindPopup(()=>makePopup(cod),{maxWidth:310,minWidth:260});
+}
+
+// ── STATS ────────────────────────────────────────────────────────────────────
+function updateStats(){
+  document.getElementById('stat-total').innerHTML=`<span>Predios: </span>${S.records.length}`;
+  const n=Object.keys(S.pdfs).filter(k=>S.pdfs[k]?.length).length;
+  document.getElementById('stat-pdf').innerHTML=`<span>Con PDF: </span>${n}`;
+}
+
+// ── TOAST ────────────────────────────────────────────────────────────────────
+let tt;
+function toast(msg,type='ok'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.style.background=type==='error'?'#b91c1c':type==='warn'?'#92400e':'#1e2535';
+  el.style.color='#fff';
+  el.classList.add('show');
+  clearTimeout(tt);
+  tt=setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+// ── DRAG EVENTS ──────────────────────────────────────────────────────────────
+document.getElementById('dz').addEventListener('dragover',e=>e.preventDefault());
+document.getElementById('pdrop').addEventListener('dragover',e=>e.preventDefault());
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+(async function init() {
+  await detectServerMode();
+  await autoLoadExcel();
+  await loadAllPdfsFromServer();
+})();
+</script>
+</body>
+</html>

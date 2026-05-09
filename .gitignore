@@ -1,0 +1,25 @@
+# Carpetas del sistema
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+
+# PDFs (no versionar)
+pdfs/*
+!pdfs/.gitkeep
+
+# Excel temporal
+*.xlsx~
+*.xls~
+
+# Logs
+*.log
+
+# Node (si se usa)
+node_modules/
+package-lock.json
+
+# Python
+__pycache__/
+*.pyc
+.env
