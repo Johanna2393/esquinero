@@ -3,164 +3,172 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Visor de Esquineros — SEDAPAL</title>
+<title>Visor Esquineros — SEDAPAL</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#eef1f7;--surface:#fff;--surface2:#f5f7fb;
   --border:#dde3ee;--border2:#c4cce0;
-  --blue:#1a4fc4;--blue2:#2563eb;--blue-light:#dbeafe;--blue-mid:#3b6fd4;
-  --teal:#0f766e;--teal-light:#ccfbf1;
-  --amber:#b45309;--amber-light:#fef3c7;
+  --blue:#1a4fc4;--blue2:#2563eb;--blue-light:#dbeafe;
   --red:#b91c1c;--red-light:#fee2e2;
   --green:#15803d;--green-light:#dcfce7;
   --violet:#6d28d9;--violet-light:#ede9fe;
+  --amber:#b45309;--amber-light:#fef3c7;
+  --orange:#c2410c;--orange-light:#fff7ed;
   --text:#111827;--text2:#374151;--text3:#6b7280;--text4:#9ca3af;
   --r:10px;--rs:6px;
 }
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
-
-/* HEADER */
-header{background:var(--blue);padding:0 18px;height:52px;display:flex;align-items:center;gap:12px;flex-shrink:0;z-index:1000}
-.logo{display:flex;align-items:center;gap:10px}
+header{background:var(--blue);padding:0 18px;height:52px;display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:1000}
+.logo{display:flex;align-items:center;gap:9px}
 .logo svg{width:22px;height:22px;fill:#fff;flex-shrink:0}
-.logo-text{font-size:14px;font-weight:700;color:#fff;letter-spacing:.2px}
-.logo-sep{color:rgba(255,255,255,.4);font-size:13px}
-.logo-sub{font-size:12px;color:rgba(255,255,255,.75)}
-header .spacer{flex:1}
-.hbtn{display:flex;align-items:center;gap:6px;padding:6px 13px;border-radius:var(--rs);border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);font-size:12px;font-weight:500;cursor:pointer;color:#fff;transition:all .15s}
+.logo-text{font-size:14px;font-weight:700;color:#fff}
+.logo-sep{color:rgba(255,255,255,.35);font-size:13px}
+.logo-sub{font-size:12px;color:rgba(255,255,255,.7)}
+header .sp{flex:1}
+.hbtn{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--rs);border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);font-size:12px;font-weight:500;cursor:pointer;color:#fff;transition:.15s}
 .hbtn:hover{background:rgba(255,255,255,.22)}
-.hbtn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
-.stat-chip{background:rgba(255,255,255,.18);color:#fff;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.25)}
-.stat-chip span{opacity:.75;font-weight:400}
-.server-badge{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
-.server-badge.on{background:#22c55e}
-.server-badge.off{background:#f59e0b}
-
-/* LAYOUT */
-.main{display:flex;flex:1;overflow:hidden}
-
-/* SIDEBAR */
-.sidebar{width:340px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.stabs{display:flex;border-bottom:1px solid var(--border)}
-.stab{flex:1;padding:10px 6px;font-size:11px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .15s;text-transform:uppercase;letter-spacing:.4px}
-.stab.on{color:var(--blue2);border-bottom-color:var(--blue2);background:var(--blue-light)}
-.spanel{display:none;flex:1;flex-direction:column;overflow:hidden}
-.spanel.on{display:flex}
-
-/* UPLOAD PANEL */
-.upsec{padding:14px}
-.dropzone{border:2px dashed var(--border2);border-radius:var(--r);padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2)}
-.dropzone:hover,.dropzone.drag{border-color:var(--blue2);background:var(--blue-light)}
-.dz-icon{width:38px;height:38px;margin:0 auto 10px;background:var(--blue-light);border-radius:9px;display:flex;align-items:center;justify-content:center}
-.dz-icon svg{width:20px;height:20px;stroke:var(--blue2);fill:none;stroke-width:1.8}
-.dz-label{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:3px}
+.hbtn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+.chip{background:rgba(255,255,255,.17);color:#fff;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.22)}
+.chip span{opacity:.7;font-weight:400}
+.mode-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px}
+.m-auto{background:#16a34a;color:#fff}
+.m-manual{background:var(--amber);color:#fff}
+.m-none{background:rgba(255,255,255,.2);color:#fff}
+.wrap{display:flex;flex:1;overflow:hidden}
+.sb{width:350px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.tabs{display:flex;border-bottom:1px solid var(--border)}
+.tab{flex:1;padding:10px 4px;font-size:10.5px;font-weight:700;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:.15s;text-transform:uppercase;letter-spacing:.4px}
+.tab.on{color:var(--blue2);border-bottom-color:var(--blue2);background:var(--blue-light)}
+.pnl{display:none;flex:1;flex-direction:column;overflow:hidden}
+.pnl.on{display:flex}
+.isec{padding:13px 14px;border-bottom:1px solid var(--border)}
+.stitle{font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.scard{border-radius:var(--rs);padding:10px 13px;border:1px solid;margin-bottom:6px}
+.scard-ok{background:#f0fdf4;border-color:#86efac}
+.scard-warn{background:var(--orange-light);border-color:#fed7aa}
+.scard-info{background:var(--blue-light);border-color:#93c5fd}
+.scard-err{background:var(--red-light);border-color:#fca5a5}
+.scard .ct{font-size:12.5px;font-weight:700;margin-bottom:3px}
+.scard-ok .ct{color:var(--green)}
+.scard-warn .ct{color:var(--orange)}
+.scard-info .ct{color:var(--blue2)}
+.scard-err .ct{color:var(--red)}
+.scard .cb{font-size:11px;line-height:1.6;color:var(--text2)}
+.scard code{background:rgba(0,0,0,.07);padding:1px 5px;border-radius:3px;font-size:10.5px;font-family:monospace}
+.tree{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:9px 12px;font-size:11px;font-family:monospace;color:var(--text2);line-height:2}
+.tf{color:var(--blue2);font-weight:700}
+.tx{color:var(--green);font-weight:600}
+.tj{color:var(--violet);font-weight:600}
+.th{color:var(--text4);font-style:italic}
+.dz{border:2px dashed var(--border2);border-radius:var(--rs);padding:14px;text-align:center;cursor:pointer;transition:.2s;background:var(--surface2);margin-top:6px}
+.dz:hover,.dz.drag{border-color:var(--blue2);background:var(--blue-light)}
+.dz-ico{width:32px;height:32px;margin:0 auto 7px;background:var(--blue-light);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.dz-ico svg{width:17px;height:17px;stroke:var(--blue2);fill:none;stroke-width:1.8}
+.dz-lbl{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:2px}
 .dz-hint{font-size:11px;color:var(--text3)}
-#excel-input{display:none}
-.info-box{margin:10px 14px 0;background:var(--blue-light);border-radius:var(--rs);padding:10px 12px;font-size:11.5px;color:var(--blue);display:none}
-.info-box b{font-weight:600}
-.faq{padding:10px 14px;font-size:11px;color:var(--text3);line-height:1.7}
-.faq b{color:var(--text2);font-weight:600}
-
-/* RECORDS */
+#xi{display:none}
 .sbar{padding:9px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
-.sinput{width:100%;padding:7px 10px 7px 30px;font-size:12px;border:1px solid var(--border2);border-radius:var(--rs);background:var(--surface2);color:var(--text);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:8px center}
-.sinput:focus{outline:none;border-color:var(--blue2)}
+.si{width:100%;padding:7px 10px 7px 30px;font-size:12px;border:1px solid var(--border2);border-radius:var(--rs);background:var(--surface2);color:var(--text);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:8px center}
+.si:focus{outline:none;border-color:var(--blue2)}
 .rlist{flex:1;overflow-y:auto}
-.ritem{padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:flex-start;gap:9px;transition:background .1s}
-.ritem:hover{background:var(--surface2)}
-.ritem.on{background:var(--blue-light)}
+.ri{padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;gap:9px;transition:.1s}
+.ri:hover{background:var(--surface2)}
+.ri.on{background:var(--blue-light)}
 .ri-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
-.ri-ico.def{background:var(--blue-light)}
-.ri-ico.haspdf{background:var(--green-light)}
-.ri-ico.hasimg{background:var(--violet-light)}
-.ri-ico.both{background:linear-gradient(135deg,var(--green-light) 50%,var(--violet-light) 50%)}
-.ri-ico svg{width:16px;height:16px;fill:none;stroke-width:1.8}
-.def svg{stroke:var(--blue2)}
-.haspdf svg{stroke:var(--green)}
-.hasimg svg{stroke:var(--violet)}
-.both svg{stroke:var(--green)}
+.ri-ico svg{width:15px;height:15px;fill:none;stroke-width:1.8}
+.c-def{background:var(--blue-light)} .c-def svg{stroke:var(--blue2)}
+.c-pdf{background:var(--green-light)} .c-pdf svg{stroke:var(--green)}
+.c-img{background:var(--violet-light)} .c-img svg{stroke:var(--violet)}
+.c-both{background:var(--green-light)} .c-both svg{stroke:var(--green)}
 .ri-body{flex:1;min-width:0}
 .ri-cod{font-size:12.5px;font-weight:700;color:var(--text)}
 .ri-meta{font-size:11px;color:var(--text3);margin-top:1px}
-.badges{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
-.badge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600}
-.b-cad{background:var(--blue-light);color:var(--blue)}
+.bgs{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.bg{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600}
+.b-lam{background:var(--blue-light);color:var(--blue)}
 .b-img{background:var(--violet-light);color:var(--violet)}
 .b-pdf{background:var(--green-light);color:var(--green)}
 .b-no{background:var(--bg);color:var(--text4);border:1px solid var(--border)}
+.b-del{background:var(--red-light);color:var(--red)}
 .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;color:var(--text3)}
 .empty svg{width:44px;height:44px;stroke:var(--border2);fill:none;stroke-width:1.2;margin-bottom:10px}
 .empty p{font-size:12px;text-align:center;line-height:1.6}
-
-/* PDF PANEL */
 .pnone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text3);gap:8px;padding:24px}
 .pnone svg{width:44px;height:44px;stroke:var(--border2);fill:none;stroke-width:1.2}
 .pnone p{font-size:12px;text-align:center;line-height:1.6}
-.ppanel{flex:1;overflow-y:auto;padding:14px;display:none;flex-direction:column;gap:12px}
-.psel-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:11px 13px}
-.psel-cod{font-size:14px;font-weight:700;color:var(--blue)}
-.psel-meta{font-size:11px;color:var(--text3);margin-top:2px}
-.img-link-card{background:var(--violet-light);border:1px solid #ddd6fe;border-radius:var(--rs);padding:10px 12px;display:flex;align-items:center;gap:8px}
-.img-link-card svg{width:16px;height:16px;stroke:var(--violet);fill:none;stroke-width:1.8;flex-shrink:0}
-.img-link-card a{font-size:12px;color:var(--violet);font-weight:600;text-decoration:none;word-break:break-all}
-.img-link-card a:hover{text-decoration:underline}
-.pdrop{border:2px dashed var(--border2);border-radius:var(--rs);padding:16px;text-align:center;cursor:pointer;transition:all .15s;background:var(--surface2)}
+.ppnl{flex:1;overflow-y:auto;padding:13px;display:none;flex-direction:column;gap:10px}
+.pcard{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px 13px}
+.pcard-cod{font-size:14px;font-weight:700;color:var(--blue)}
+.pcard-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.pcard-path{font-size:10.5px;font-family:monospace;color:var(--text4);margin-top:5px;background:var(--bg);padding:3px 7px;border-radius:4px;border:1px solid var(--border);display:inline-block}
+.img-row{background:var(--violet-light);border:1px solid #ddd6fe;border-radius:var(--rs);padding:8px 11px;display:flex;align-items:center;gap:7px}
+.img-row svg{width:14px;height:14px;stroke:var(--violet);fill:none;stroke-width:1.8;flex-shrink:0}
+.img-row a{font-size:11.5px;color:var(--violet);font-weight:600;text-decoration:none}
+.img-row a:hover{text-decoration:underline}
+.pdrop{border:2px dashed var(--border2);border-radius:var(--rs);padding:13px;text-align:center;cursor:pointer;transition:.15s;background:var(--surface2)}
 .pdrop:hover,.pdrop.drag{border-color:var(--green);background:var(--green-light)}
 .pdrop-lbl{font-size:12.5px;color:var(--text2);font-weight:600}
 .pdrop-hint{font-size:11px;color:var(--text3);margin-top:3px}
-#pdf-input{display:none}
-.plist{display:flex;flex-direction:column;gap:7px}
-.pitem{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px}
-.pitem-ico{width:26px;height:26px;background:var(--red-light);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.pitem-ico svg{width:14px;height:14px;stroke:var(--red);fill:none;stroke-width:1.8}
-.pitem-name{flex:1;font-size:11.5px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pitem-kb{font-size:10.5px;color:var(--text3)}
-.ibtn{width:26px;height:26px;border:1px solid var(--border2);border-radius:5px;background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
-.ibtn:hover{background:var(--bg)}
-.ibtn.del:hover{background:var(--red-light);border-color:#fca5a5}
-.ibtn svg{width:13px;height:13px;stroke:var(--text3);fill:none;stroke-width:1.8}
-.ibtn.del svg{stroke:var(--red)}
-.no-pdf-msg{text-align:center;padding:14px;color:var(--text4);font-size:11.5px}
-.sec-title{font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
-
-/* MAP */
+#pi{display:none}
+.pfiles{display:flex;flex-direction:column;gap:5px}
+.pf{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:7px 9px}
+.pf-ico{width:25px;height:25px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pf-ico.pdf{background:var(--red-light)} .pf-ico.pdf svg{stroke:var(--red)}
+.pf-ico.sys{background:var(--green-light)} .pf-ico.sys svg{stroke:var(--green)}
+.pf-ico svg{width:13px;height:13px;fill:none;stroke-width:1.8}
+.pf-name{flex:1;font-size:11.5px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-kb{font-size:10px;color:var(--text3)}
+.pf-tag{font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;flex-shrink:0}
+.tag-local{background:var(--blue-light);color:var(--blue2)}
+.tag-disk{background:var(--green-light);color:var(--green)}
+.ib{width:25px;height:25px;border:1px solid var(--border2);border-radius:5px;background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s;flex-shrink:0;text-decoration:none}
+.ib:hover{background:var(--bg)}
+.ib.del:hover{background:var(--red-light);border-color:#fca5a5}
+.ib svg{width:12px;height:12px;stroke:var(--text3);fill:none;stroke-width:1.8}
+.ib.del svg{stroke:var(--red)}
+.no-pdf{text-align:center;padding:12px;color:var(--text4);font-size:11.5px;line-height:1.6}
+.sec-t{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.legend{position:absolute;bottom:24px;left:14px;z-index:500;background:rgba(255,255,255,.95);border:1px solid var(--border);border-radius:var(--rs);padding:9px 12px;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.legend-title{font-weight:700;color:var(--text2);margin-bottom:6px;font-size:11.5px}
+.lg-row{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.lg-row:last-child{margin-bottom:0}
+.lg-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;border:2px solid}
 #map{flex:1;z-index:1}
-
-/* LEAFLET POPUP */
-.leaflet-popup-content-wrapper{border-radius:10px!important;box-shadow:0 6px 24px rgba(0,0,0,.18)!important;padding:0!important;overflow:hidden;min-width:260px}
+.leaflet-popup-content-wrapper{border-radius:10px!important;box-shadow:0 6px 24px rgba(0,0,0,.18)!important;padding:0!important;overflow:hidden;min-width:265px}
 .leaflet-popup-content{margin:0!important}
-.ph{background:var(--blue);padding:10px 14px}
+.ph{padding:10px 14px}
 .ph-cod{font-size:13px;font-weight:700;color:#fff}
-.ph-lam{font-size:11px;color:rgba(255,255,255,.75);margin-top:2px}
+.ph-sub{font-size:11px;color:rgba(255,255,255,.75);margin-top:2px}
 .pb{padding:11px 14px;background:#fff}
-.pr{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;gap:8px}
-.pr:last-child{margin-bottom:0}
-.pk{color:#6b7280}
-.pv{font-weight:600;color:#111827;text-align:right}
-hr.pd{border:none;border-top:1px solid #e5e7eb;margin:10px 0}
+.pr{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px;gap:8px}
+.pk{color:#6b7280}.pv{font-weight:600;color:#111827;text-align:right}
+hr.pd{border:none;border-top:1px solid #e5e7eb;margin:8px 0}
 .psec{padding:0 14px 12px;background:#fff}
-.psec-t{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:6px}
-.pimg-btn{display:flex;align-items:center;gap:6px;padding:7px 10px;background:#ede9fe;border:1px solid #ddd6fe;border-radius:6px;font-size:11.5px;color:#6d28d9;cursor:pointer;text-decoration:none;margin-bottom:5px;transition:all .1s;font-weight:600}
-.pimg-btn:hover{background:#ddd6fe}
-.pimg-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
-.ppdf-link{display:flex;align-items:center;gap:6px;padding:6px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:11.5px;color:#15803d;cursor:pointer;margin-bottom:4px;font-weight:600;transition:all .1s}
-.ppdf-link:hover{background:#dcfce7}
-.ppdf-link svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
-.pno{font-size:11.5px;color:#9ca3af;display:flex;align-items:center;gap:5px;padding:3px 0}
-.pno svg{width:13px;height:13px;stroke:#d1d5db;fill:none;stroke-width:1.8}
-.pup-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:7px;background:#f0fdf4;border:1px dashed #86efac;border-radius:6px;font-size:11.5px;color:#15803d;cursor:pointer;margin-top:6px;font-weight:500;transition:all .1s}
-.pup-btn:hover{background:#dcfce7}
-.pup-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8}
-
-/* TOAST */
-.toast{position:fixed;bottom:20px;right:20px;padding:9px 15px;border-radius:8px;font-size:12.5px;z-index:9999;opacity:0;transform:translateY(6px);transition:all .22s;pointer-events:none;font-weight:500}
+.psec-t{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:5px}
+.p-imgbtn{display:flex;align-items:center;gap:6px;padding:6px 10px;background:#ede9fe;border:1px solid #ddd6fe;border-radius:6px;font-size:11.5px;color:#6d28d9;text-decoration:none;margin-bottom:5px;font-weight:600;transition:.1s}
+.p-imgbtn:hover{background:#ddd6fe}
+.p-imgbtn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
+.p-pdflink{display:flex;align-items:center;gap:6px;padding:6px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:11.5px;color:#15803d;cursor:pointer;margin-bottom:4px;font-weight:600;transition:.1s}
+.p-pdflink:hover{background:#dcfce7}
+.p-pdflink svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
+.p-diskpdf{display:flex;align-items:center;gap:6px;padding:6px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:11.5px;color:#15803d;text-decoration:none;margin-bottom:4px;font-weight:600;transition:.1s}
+.p-diskpdf:hover{background:#dcfce7}
+.p-diskpdf svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
+.p-no{font-size:11px;color:#9ca3af;display:flex;align-items:center;gap:5px;padding:3px 0}
+.p-no svg{width:12px;height:12px;stroke:#d1d5db;fill:none;stroke-width:1.8}
+.p-upbtn{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;padding:7px;background:#f0fdf4;border:1px dashed #86efac;border-radius:6px;font-size:11.5px;color:#15803d;cursor:pointer;margin-top:5px;font-weight:500;transition:.1s}
+.p-upbtn:hover{background:#dcfce7}
+.p-upbtn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8}
+.p-del-badge{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--red-light);border:1px solid #fca5a5;border-radius:6px;font-size:11px;color:var(--red);margin-top:4px;font-style:italic}
+.p-del-badge svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
+.toast{position:fixed;bottom:18px;right:18px;padding:9px 14px;border-radius:8px;font-size:12px;z-index:9999;opacity:0;transform:translateY(6px);transition:.22s;pointer-events:none;font-weight:500;color:#fff}
 .toast.show{opacity:1;transform:translateY(0)}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-thumb{background:#d0d5e0;border-radius:2px}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#d0d5e0;border-radius:2px}
 </style>
 </head>
 <body>
@@ -172,85 +180,95 @@ hr.pd{border:none;border-top:1px solid #e5e7eb;margin:10px 0}
     <span class="logo-sep">|</span>
     <span class="logo-sub">SEDAPAL — Gestión Catastral</span>
   </div>
-  <div class="spacer"></div>
-  <div class="stat-chip"><span class="server-badge on" id="server-badge"></span><span>Servidor: </span><span id="server-status">Detectando...</span></div>
-  <div id="stat-total" class="stat-chip" style="margin-right:6px"><span>Predios: </span>0</div>
-  <div id="stat-pdf" class="stat-chip" style="margin-right:10px"><span>Con PDF: </span>0</div>
-  <button class="hbtn" onclick="document.getElementById('excel-input').click()">
-    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-    Cargar Excel
+  <div class="sp"></div>
+  <span id="mode-tag" class="mode-tag m-none">Cargando...</span>
+  <div id="chip-total" class="chip" style="margin-left:8px"><span>Predios: </span>0</div>
+  <div id="chip-pdf"   class="chip" style="margin-left:6px"><span>Con PDF: </span>0</div>
+  <button class="hbtn" style="margin-left:8px" onclick="reloadAll()">
+    <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    Recargar
   </button>
 </header>
 
-<div class="main">
-  <div class="sidebar">
-    <div class="stabs">
-      <button class="stab on" onclick="tab('info')">📂 Cargar</button>
-      <button class="stab" onclick="tab('list')">📋 Predios</button>
-      <button class="stab" onclick="tab('pdfs')">📄 PDFs</button>
+<div class="wrap">
+  <div class="sb">
+    <div class="tabs">
+      <button class="tab on" onclick="tab('info')">ℹ Info</button>
+      <button class="tab"    onclick="tab('list')">📋 Predios</button>
+      <button class="tab"    onclick="tab('pdfs')">📄 PDFs</button>
     </div>
 
-    <!-- TAB INFO -->
-    <div class="spanel on" id="t-info">
-      <div class="upsec">
-        <div class="dropzone" id="dz" onclick="document.getElementById('excel-input').click()" ondrop="onXlsDrop(event)" ondragover="ev=>ev.preventDefault()" ondragenter="this.classList.add('drag')" ondragleave="this.classList.remove('drag')">
-          <div class="dz-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg></div>
-          <div class="dz-label">Cargar archivo Excel</div>
-          <div class="dz-hint">.xlsx — Arrastra o haz clic aquí</div>
+    <!-- INFO -->
+    <div class="pnl on" id="t-info" style="overflow-y:auto">
+      <div class="isec">
+        <div class="stitle">Estado del sistema</div>
+        <div id="sc-gj" class="scard scard-info">
+          <div class="ct">Cargando GeoJSON...</div>
+          <div class="cb" id="sc-gj-b">Leyendo <code>datos/esquineros.geojson</code></div>
         </div>
-        <input type="file" id="excel-input" accept=".xlsx,.xls" onchange="loadXls(this.files[0])">
+        <div id="sc-pdf" class="scard scard-info">
+          <div class="ct">Detectando PDFs en carpetas...</div>
+          <div class="cb" id="sc-pdf-b">Consultando servidor local</div>
+        </div>
       </div>
-      <div class="info-box" id="ibox"></div>
-      <div class="faq">
-        <b>Columnas esperadas:</b><br>
-        <code>cod_cad</code> · <code>x</code> (Este UTM) · <code>y</code> (Norte UTM) · <code>lamina</code> · <code>Cuadrante</code> · <code>Secuencial</code> · <code>Imagen</code> (URL) · <code>cd_imagen</code><br><br>
-        <b>Coordenadas:</b> Sistema UTM WGS-84 Zona 18S (EPSG:32718)<br><br>
-        <b>PDFs:</b> Se crean carpetas por <code>cod_cad</code> en <code>pdfs/</code>
+
+      <div style="padding:10px 14px 14px;font-size:11px;color:var(--text3);line-height:1.8">
+        <b style="color:var(--text2)">Para leer PDFs del disco automáticamente:</b><br>
+        Ejecuta <code>python servidor.py</code> y abre <code>http://localhost:8000</code><br><br>
+        <b style="color:var(--text2)">Colores de marcadores:</b><br>
+        🟢 Con PDF en carpeta &nbsp;·&nbsp; 🟣 Solo imagen SEDAPAL &nbsp;·&nbsp; 🔵 Sin archivos<br>
+        🔴 Marcado como borrado (BORRADO=1)
       </div>
     </div>
 
-    <!-- TAB LIST -->
-    <div class="spanel" id="t-list">
+    <!-- PREDIOS -->
+    <div class="pnl" id="t-list">
       <div class="sbar">
-        <input class="sinput" id="sinput" placeholder="Buscar por código, lámina..." oninput="filterList(this.value)">
+        <input class="si" id="si" placeholder="Buscar cod_cad, lámina, cuadrante..." oninput="filterList(this.value)">
       </div>
       <div class="rlist" id="rlist">
         <div class="empty">
-          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <p>Carga un archivo Excel para ver los predios</p>
+          <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+          <p>Cargando datos del GeoJSON...</p>
         </div>
       </div>
     </div>
 
-    <!-- TAB PDFs -->
-    <div class="spanel" id="t-pdfs">
+    <!-- PDFs -->
+    <div class="pnl" id="t-pdfs">
       <div class="pnone" id="pnone">
         <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
-        <p>Selecciona un predio en el mapa o en la lista para gestionar sus archivos PDF</p>
+        <p>Selecciona un predio en el mapa<br>o en la lista para ver y gestionar<br>sus archivos PDF</p>
       </div>
-      <div class="ppanel" id="ppanel">
-        <div class="psel-card">
-          <div class="psel-cod" id="pp-cod">—</div>
-          <div class="psel-meta" id="pp-meta">—</div>
+      <div class="ppnl" id="ppnl">
+        <div class="pcard">
+          <div class="pcard-cod" id="pp-cod">—</div>
+          <div class="pcard-meta" id="pp-meta">—</div>
+          <div class="pcard-path" id="pp-path">pdfs/—/</div>
         </div>
         <div>
-          <div class="sec-title" style="margin-bottom:6px">🖼️ Imagen del sistema</div>
-          <div class="img-link-card" id="pp-imgcard">
+          <div class="sec-t" style="margin-bottom:5px">🖼 Imagen del sistema SEDAPAL</div>
+          <div class="img-row" id="pp-imgrow">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            <a id="pp-imglink" href="#" target="_blank">—</a>
+            <a id="pp-imga" href="#" target="_blank">Ver imagen del croquis →</a>
           </div>
         </div>
         <div>
-          <div class="sec-title" style="margin-bottom:6px">📎 Subir PDFs a esta carpeta</div>
-          <div class="pdrop" id="pdrop" onclick="document.getElementById('pdf-input').click()" ondrop="onPdfDrop(event)" ondragover="ev=>ev.preventDefault()" ondragenter="this.classList.add('drag')" ondragleave="this.classList.remove('drag')">
+          <div class="sec-t" style="margin-bottom:5px">📎 Subir PDF a esta carpeta</div>
+          <div class="pdrop" id="pdrop" onclick="document.getElementById('pi').click()"
+            ondrop="onPdfDrop(event)" ondragover="e=>e.preventDefault()"
+            ondragenter="this.classList.add('drag')" ondragleave="this.classList.remove('drag')">
             <div class="pdrop-lbl">Agregar archivo PDF</div>
-            <div class="pdrop-hint">Arrastra o haz clic · Se puede subir más de uno</div>
+            <div class="pdrop-hint">Arrastra o haz clic · Puedes subir varios a la vez</div>
           </div>
-          <input type="file" id="pdf-input" accept=".pdf" multiple onchange="addPdfs(this.files)">
+          <input type="file" id="pi" accept=".pdf" multiple onchange="addPdfs(this.files)">
         </div>
         <div>
-          <div class="sec-title" style="margin-bottom:6px">📁 Archivos en carpeta</div>
-          <div class="plist" id="plist"></div>
+          <div class="sec-t" style="margin-bottom:5px">
+            📁 Archivos en carpeta
+            <span id="pp-cnt" style="color:var(--text4);font-weight:400;text-transform:none;font-size:10px">(0)</span>
+          </div>
+          <div class="pfiles" id="pfiles"></div>
         </div>
       </div>
     </div>
@@ -259,257 +277,256 @@ hr.pd{border:none;border-top:1px solid #e5e7eb;margin:10px 0}
   <div id="map"></div>
 </div>
 
+<div class="legend">
+  <div class="legend-title">Leyenda</div>
+  <div class="lg-row"><div class="lg-dot" style="background:#22c55e;border-color:#15803d"></div><span>Con archivos PDF</span></div>
+  <div class="lg-row"><div class="lg-dot" style="background:#a78bfa;border-color:#6d28d9"></div><span>Imagen SEDAPAL (sin PDF)</span></div>
+  <div class="lg-row"><div class="lg-dot" style="background:#60a5fa;border-color:#1a4fc4"></div><span>Sin archivos</span></div>
+  <div class="lg-row"><div class="lg-dot" style="background:#f87171;border-color:#b91c1c"></div><span>Marcado como borrado</span></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-// ── CONFIG ────────────────────────────────────────────────────────────────────
-const CFG = {
-  excelPath: 'datos/datos.xlsx',
-  apiBase: 'api'
-};
-
-// ── UTM 18S → WGS84 ───────────────────────────────────────────────────────────
-function utm18sToLatLon(E, N) {
-  const a=6378137, f=1/298.257223563;
-  const b=a*(1-f), e2=1-(b*b)/(a*a), ep2=e2/(1-e2);
-  const k0=0.9996, E0=500000, N0=10000000, lon0=-75*(Math.PI/180);
-  const M = (N-N0)/k0;
-  const mu = M/(a*(1-e2/4-3*e2*e2/64-5*e2*e2*e2/256));
-  const e1 = (1-Math.sqrt(1-e2))/(1+Math.sqrt(1-e2));
-  const phi1 = mu+(3*e1/2-27*e1*e1*e1/32)*Math.sin(2*mu)+(21*e1*e1/16-55*e1*e1*e1*e1/32)*Math.sin(4*mu)+(151*e1*e1*e1/96)*Math.sin(6*mu);
-  const N1=a/Math.sqrt(1-e2*Math.sin(phi1)*Math.sin(phi1));
-  const T1=Math.tan(phi1)*Math.tan(phi1);
-  const C1=ep2*Math.cos(phi1)*Math.cos(phi1);
-  const R1=a*(1-e2)/Math.pow(1-e2*Math.sin(phi1)*Math.sin(phi1),1.5);
-  const D=(E-E0)/(N1*k0);
-  const lat=phi1-(N1*Math.tan(phi1)/R1)*(D*D/2-(5+3*T1+10*C1-4*C1*C1-9*ep2)*D*D*D*D/24+(61+90*T1+298*C1+45*T1*T1-252*ep2-3*C1*C1)*D*D*D*D*D*D/720);
-  const lon=lon0+(D-(1+2*T1+C1)*D*D*D/6+(5-2*C1+28*T1-3*C1*C1+8*ep2+24*T1*T1)*D*D*D*D*D/120)/Math.cos(phi1);
-  return [lat*180/Math.PI, lon*180/Math.PI];
-}
-
-// ── STATE ────────────────────────────────────────────────────────────────────
+// ─── STATE ────────────────────────────────────────────────────────────────────
 const S = {
-  records: [], pdfs: {}, sel: null,
-  map: null, lg: null, serverMode: false
+  features:   [],   // [{cod, lat, lon, cuadrante, sec, lamina, cdImagen, imgUrl, xUtm, yUtm, borrado, marker}]
+  diskPdfs:   {},   // cod_cad → ['archivo.pdf', ...] leídos del servidor
+  localPdfs:  {},   // cod_cad → [{name, size, dataUrl}] subidos en sesión
+  sel:        null,
+  map:        null,
+  lg:         null,
+  serverOk:   false
 };
 
-// ── MAP ──────────────────────────────────────────────────────────────────────
-S.map = L.map('map').setView([-11.955, -77.009], 17);
-const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19});
-const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:19});
+// ─── MAPA ─────────────────────────────────────────────────────────────────────
+S.map = L.map('map').setView([-11.955, -77.009], 16);
+const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:20});
+const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:20});
 osm.addTo(S.map);
-L.control.layers({'Mapa base':osm,'Satélite':sat}).addTo(S.map);
+L.control.layers({'Mapa base':osm,'Satélite':sat},{},{position:'topright'}).addTo(S.map);
 S.lg = L.layerGroup().addTo(S.map);
 
-// ── DETECT SERVER ────────────────────────────────────────────────────────────
-async function detectServerMode() {
-  try {
-    const r = await fetch(`${CFG.apiBase}/ping.php`);
-    if (r.ok) {
-      S.serverMode = true;
-      document.getElementById('server-badge').style.background = '#22c55e';
-      document.getElementById('server-status').textContent = 'Conectado ✓';
-      return true;
-    }
-  } catch(e) {}
-  S.serverMode = false;
-  document.getElementById('server-badge').style.background = '#f59e0b';
-  document.getElementById('server-status').textContent = 'Local (sin servidor)';
-  return false;
-}
-
-// ── AUTO LOAD EXCEL ──────────────────────────────────────────────────────────
-async function autoLoadExcel() {
-  try {
-    const r = await fetch(CFG.excelPath);
-    if (!r.ok) throw new Error('No encontrado');
-    const buf = await r.arrayBuffer();
-    const wb = XLSX.read(buf, {type:'array'});
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
-    if (rows.length) {
-      processRows(rows);
-      toast(`✓ Auto-cargado: ${S.records.length} predios desde datos/datos.xlsx`);
-    }
-  } catch(e) {
-    toast('⚠ Coloca el Excel en datos/datos.xlsx', 'warn');
-  }
-}
-
-// ── LOAD ALL PDFS FROM SERVER ────────────────────────────────────────────────
-async function loadAllPdfsFromServer() {
-  if (!S.serverMode) return;
-  try {
-    const r = await fetch(`${CFG.apiBase}/list_all.php`);
-    const j = await r.json();
-    if (j.ok) {
-      S.pdfs = j.pdfs || {};
-      S.records.forEach(r => refreshMarker(r.cod));
-      renderList();
-      updateStats();
-    }
-  } catch(e) {}
-}
-
-// ── TABS ─────────────────────────────────────────────────────────────────────
-function tab(name) {
-  const tabs=['info','list','pdfs'];
-  document.querySelectorAll('.stab').forEach((b,i)=>b.classList.toggle('on',tabs[i]===name));
-  document.querySelectorAll('.spanel').forEach((p,i)=>p.classList.toggle('on',['t-info','t-list','t-pdfs'][i]==='t-'+name));
-}
-
-// ── EXCEL LOAD ───────────────────────────────────────────────────────────────
-function onXlsDrop(e){e.preventDefault();document.getElementById('dz').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)loadXls(f);}
-function loadXls(file){
-  if(!file)return;
-  const r=new FileReader();
-  r.onload=function(e){
-    try{
-      const wb=XLSX.read(e.target.result,{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
-      if(!rows.length){toast('El archivo está vacío','warn');return;}
-      processRows(rows);
-      toast(`✓ Excel cargado: ${S.records.length} predios únicos`);
-    }catch(err){toast('✕ Error al leer el archivo','error');console.error(err);}
-  };
-  r.readAsArrayBuffer(file);
-}
-
-function processRows(rows){
-  const seen=new Set();
-  const unique=[];
-  rows.forEach(r=>{const k=String(r.cod_cad||'').trim();if(k&&!seen.has(k)){seen.add(k);unique.push(r);}});
-
-  S.lg.clearLayers();
-  S.records=[];
-  const bounds=[];
-
-  unique.forEach(row=>{
-    const cod=String(row.cod_cad||'').trim();
-    const x=parseFloat(row.x);
-    const y=parseFloat(row.y);
-    if(!cod||isNaN(x)||isNaN(y))return;
-
-    const [lat,lon]=utm18sToLatLon(x,y);
-    const lamina=String(row.lamina||'');
-    const cuadrante=String(row.Cuadrante||'');
-    const sec=String(row.Secuencial||'');
-    const cdImagen=String(row.cd_imagen||'');
-    const imgUrl=String(row.Imagen||'');
-
-    const marker=L.circleMarker([lat,lon],markerStyle(cod));
-    marker.on('click',()=>selectRec(cod));
-    marker.bindPopup(()=>makePopup(cod),{maxWidth:310,minWidth:260});
-
-    S.lg.addLayer(marker);
-    S.records.push({cod,lat,lon,lamina,cuadrante,sec,cdImagen,imgUrl,marker});
-    bounds.push([lat,lon]);
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function tab(n){
+  ['info','list','pdfs'].forEach((k,i)=>{
+    document.querySelectorAll('.tab')[i].classList.toggle('on',k===n);
+    document.querySelectorAll('.pnl')[i].classList.toggle('on',['t-info','t-list','t-pdfs'][i]==='t-'+n);
   });
+}
 
-  if(bounds.length)S.map.fitBounds(bounds,{padding:[40,40],maxZoom:18});
+// ─── RELOAD ───────────────────────────────────────────────────────────────────
+async function reloadAll(){
+  await loadGeoJSON();
+  await loadDiskPdfs();
+  redrawMarkers();
   renderList();
   updateStats();
-  tab('list');
-
-  const ibox=document.getElementById('ibox');
-  ibox.style.display='block';
-  ibox.innerHTML=`<b>${S.records.length}</b> predios cargados · <b>${rows.length}</b> filas en Excel`;
 }
 
-function markerStyle(cod){
-  const hasPdf=!!(S.pdfs[cod]?.length);
-  const rec=S.records.find(r=>r.cod===cod);
-  const hasImg=!!(rec?.imgUrl);
+// ─── CARGAR GEOJSON ───────────────────────────────────────────────────────────
+async function loadGeoJSON(){
+  for(const p of ['datos/esquineros.geojson','./datos/esquineros.geojson']){
+    try{
+      const r = await fetch(p); if(!r.ok) continue;
+      processGeoJSON(await r.json(), 'auto');
+      return;
+    }catch(e){}
+  }
+  setCard('sc-gj','warn','⚠ GeoJSON no encontrado','Usa la carga manual o ejecuta el servidor. Ruta: <code>datos/esquineros.geojson</code>');
+}
+
+function processGeoJSON(gj, mode){
+  if(!gj?.features?.length){ setCard('sc-gj','err','✕ GeoJSON vacío o inválido','El archivo no contiene features válidos.'); return; }
+  S.features = gj.features.map(f=>({
+    cod:       String(f.properties.cod_cad||'').trim(),
+    lat:       f.geometry.coordinates[1],
+    lon:       f.geometry.coordinates[0],
+    cuadrante: f.properties.Cuadrante||'',
+    sec:       f.properties.Secuencial||'',
+    lamina:    f.properties.lamina||'',
+    cdImagen:  f.properties.cd_imagen||'',
+    imgUrl:    f.properties.Imagen||'',
+    xUtm:      f.properties.x_utm||0,
+    yUtm:      f.properties.y_utm||0,
+    borrado:   !!f.properties.BORRADO,
+    marker:    null
+  }));
+  setCard('sc-gj','ok',`✓ GeoJSON cargado ${mode==='auto'?'automáticamente':'manualmente'}`,
+    `<b>${S.features.length}</b> esquineros únicos · fuente: <code>${mode==='auto'?'datos/esquineros.geojson':'archivo seleccionado'}</code>`);
+  document.getElementById('mode-tag').textContent = mode==='auto'?'Auto':'Manual';
+  document.getElementById('mode-tag').className   = `mode-tag ${mode==='auto'?'m-auto':'m-manual'}`;
+  redrawMarkers();
+  renderList();
+  tab('list');
+  if(S.features.length) S.map.fitBounds(S.features.map(f=>[f.lat,f.lon]),{padding:[40,40],maxZoom:18});
+}
+
+// ─── LEER PDFs DEL SERVIDOR ───────────────────────────────────────────────────
+async function loadDiskPdfs(){
+  try{
+    const r = await fetch('/api/pdfs/all'); if(!r.ok) throw 0;
+    S.diskPdfs = await r.json();
+    S.serverOk = true;
+    const total = Object.values(S.diskPdfs).reduce((a,v)=>a+v.length,0);
+    const cods  = Object.keys(S.diskPdfs).filter(k=>S.diskPdfs[k].length);
+    setCard('sc-pdf','ok','✓ Servidor activo — PDFs detectados en disco',
+      `<b>${total}</b> archivos PDF en <b>${cods.length}</b> carpetas`);
+  }catch(e){
+    S.serverOk=false;
+    setCard('sc-pdf','warn','⚠ Sin servidor — modo sesión activo',
+      'Los PDFs subidos desde la interfaz se guardan en memoria de sesión.<br>Para leer el disco: <code>python servidor.py</code>');
+  }
+  redrawMarkers();
+  renderList();
+  updateStats();
+}
+
+// ─── DRAG GEOJSON ─────────────────────────────────────────────────────────────
+function onGjDrop(e){ e.preventDefault(); document.getElementById('dz').classList.remove('drag'); loadGjFile(e.dataTransfer.files[0]); }
+function loadGjFile(f){ if(!f)return; const r=new FileReader(); r.onload=e=>{ try{processGeoJSON(JSON.parse(e.target.result),'manual');toast('GeoJSON cargado');}catch(x){toast('Error al leer GeoJSON','err');} }; r.readAsText(f); }
+
+// ─── MARCADORES ───────────────────────────────────────────────────────────────
+function mkStyle(cod, borrado){
+  const disk  = (S.diskPdfs[cod]||[]).length;
+  const local = (S.localPdfs[cod]||[]).length;
+  const hasPdf = disk||local;
+  // buscar imagen desde features
+  const feat = S.features.find(f=>f.cod===cod);
+  const hasImg = !!(feat?.imgUrl);
   return{
     radius:9,
-    color: hasPdf?'#15803d':'#1a4fc4',
-    fillColor: hasPdf?'#22c55e': hasImg?'#7c3aed':'#3b6fd4',
-    fillOpacity:.85,weight:2.5
+    color:      borrado?'#b91c1c': hasPdf?'#15803d': hasImg?'#6d28d9':'#1a4fc4',
+    fillColor:  borrado?'#f87171': hasPdf?'#22c55e': hasImg?'#a78bfa':'#60a5fa',
+    fillOpacity: borrado?.5:.88,
+    weight:2.5,
+    dashArray: borrado?'5,3':''
   };
 }
 
-// ── POPUP ────────────────────────────────────────────────────────────────────
+function redrawMarkers(){
+  S.lg.clearLayers();
+  S.features.forEach(feat=>{
+    const m = L.circleMarker([feat.lat,feat.lon], mkStyle(feat.cod, feat.borrado));
+    m.on('click',()=>selectFeat(feat.cod));
+    m.bindPopup(()=>makePopup(feat.cod),{maxWidth:320,minWidth:265});
+    S.lg.addLayer(m);
+    feat.marker = m;
+  });
+  updateStats();
+}
+
+function refreshMarker(cod){
+  const feat=S.features.find(f=>f.cod===cod); if(!feat?.marker)return;
+  feat.marker.setStyle(mkStyle(cod,feat.borrado));
+  feat.marker.bindPopup(()=>makePopup(cod),{maxWidth:320,minWidth:265});
+  if(feat.marker.isPopupOpen()) feat.marker.setPopupContent(makePopup(cod));
+}
+
+// ─── POPUP ────────────────────────────────────────────────────────────────────
 function makePopup(cod){
-  const rec=S.records.find(r=>r.cod===cod);
-  if(!rec)return'';
-  const pdfs=S.pdfs[cod]||[];
-  const imgBtn=rec.imgUrl
-    ?`<a class="pimg-btn" href="${rec.imgUrl}" target="_blank"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Ver croquis en SEDAPAL</a>`
-    :`<div class="pno"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Sin URL de imagen</div>`;
-  const pdfHtml=pdfs.length
-    ?pdfs.map((p,i)=>`<div class="ppdf-link" onclick="openPdf('${cod}',${i})"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${p.name}</div>`).join('')
-    :`<div class="pno"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Sin archivos PDF</div>`;
+  const feat=S.features.find(f=>f.cod===cod); if(!feat)return'';
+  const disk  = S.diskPdfs[cod]||[];
+  const local = S.localPdfs[cod]||[];
+  const hasPdf= disk.length||local.length;
+  const phClr = feat.borrado?'#b91c1c': hasPdf?'#15803d': feat.imgUrl?'#6d28d9':'#1a4fc4';
 
-  return `<div class="ph"><div class="ph-cod">${cod}</div><div class="ph-lam">Lámina ${rec.lamina} · Cuad. ${rec.cuadrante} · Sec. ${rec.sec}</div></div>
-<div class="pb">
-  <div class="pr"><span class="pk">cd_imagen</span><span class="pv">${rec.cdImagen}</span></div>
-  <div class="pr"><span class="pk">X (Este)</span><span class="pv">${rec.lon.toFixed(6)}</span></div>
-  <div class="pr"><span class="pk">Y (Norte)</span><span class="pv">${rec.lat.toFixed(6)}</span></div>
-</div>
-<hr class="pd">
-<div class="psec">
-  <div class="psec-t">🖼️ Imagen del sistema</div>
-  ${imgBtn}
-  <div class="psec-t" style="margin-top:10px">📁 Carpeta: ${cod}</div>
-  ${pdfHtml}
-  <button class="pup-btn" onclick="openPdfPanelFrom('${cod}')">
-    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-    Subir PDF a esta carpeta
-  </button>
-</div>`;
+  const imgHtml = feat.imgUrl
+    ?`<a class="p-imgbtn" href="${feat.imgUrl}" target="_blank">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Ver croquis en sistema SEDAPAL
+      </a>`
+    :`<div class="p-no"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Sin URL de imagen registrada</div>`;
+
+  // PDFs del disco (links directos)
+  const diskHtml = disk.map(name=>
+    `<a class="p-diskpdf" href="pdfs/${cod}/${encodeURIComponent(name)}" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      ${name}
+      <span style="font-size:9px;opacity:.55;margin-left:auto;flex-shrink:0">disco</span>
+    </a>`
+  ).join('');
+
+  // PDFs de sesión
+  const localHtml = local.map((p,i)=>
+    `<div class="p-pdflink" onclick="openLocalPdf('${cod}',${i})">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      ${p.name}
+      <span style="font-size:9px;opacity:.55;margin-left:auto;flex-shrink:0">sesión</span>
+    </div>`
+  ).join('');
+
+  const noFiles = !disk.length&&!local.length
+    ?`<div class="p-no"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Sin archivos PDF en carpeta <code>pdfs/${cod}/</code></div>`:'';
+
+  return `<div class="ph" style="background:${phClr}">
+    <div class="ph-cod">${cod}</div>
+    <div class="ph-sub">Lámina ${feat.lamina} · Cuadrante ${feat.cuadrante} · Sec. ${feat.sec}${feat.borrado?' · ⚠ BORRADO':''}</div>
+  </div>
+  <div class="pb">
+    <div class="pr"><span class="pk">cd_imagen</span><span class="pv">${feat.cdImagen}</span></div>
+    <div class="pr"><span class="pk">Este X (UTM)</span><span class="pv">${feat.xUtm.toFixed(3)}</span></div>
+    <div class="pr"><span class="pk">Norte Y (UTM)</span><span class="pv">${feat.yUtm.toFixed(3)}</span></div>
+    <div class="pr"><span class="pk">Lat WGS84</span><span class="pv">${feat.lat.toFixed(7)}</span></div>
+    <div class="pr"><span class="pk">Lon WGS84</span><span class="pv">${feat.lon.toFixed(7)}</span></div>
+  </div>
+  <hr class="pd">
+  <div class="psec">
+    <div class="psec-t">🖼 Imagen del sistema</div>
+    ${imgHtml}
+    <div class="psec-t" style="margin-top:9px">📁 Carpeta: pdfs/${cod}/</div>
+    ${diskHtml}${localHtml}${noFiles}
+    ${feat.borrado?`<div class="p-del-badge"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Marcado como BORRADO en el sistema</div>`:''}
+    <button class="p-upbtn" onclick="openPdfPanelFrom('${cod}')">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+      Subir PDF a esta carpeta
+    </button>
+  </div>`;
 }
 
-// ── SELECT ────────────────────────────────────────────────────────────────────
-function selectRec(cod){
+// ─── SELECT ───────────────────────────────────────────────────────────────────
+function selectFeat(cod){
   S.sel=cod;
-  const rec=S.records.find(r=>r.cod===cod);
+  const feat=S.features.find(f=>f.cod===cod);
   document.getElementById('pnone').style.display='none';
-  const pp=document.getElementById('ppanel');
-  pp.style.display='flex';
-  document.getElementById('pp-cod').textContent=`📁 Carpeta: ${cod}`;
-  document.getElementById('pp-meta').textContent=rec?`Lámina ${rec.lamina} · Cuadrante ${rec.cuadrante} · Sec. ${rec.sec}`:''
-  if(rec&&rec.imgUrl){
-    document.getElementById('pp-imgcard').style.display='flex';
-    const a=document.getElementById('pp-imglink');
-    a.href=rec.imgUrl;
-    a.textContent='Ver imagen del croquis →';
-  } else {
-    document.getElementById('pp-imgcard').style.display='none';
-  }
+  document.getElementById('ppnl').style.display='flex';
+  document.getElementById('pp-cod').textContent=`📁 ${cod}`;
+  document.getElementById('pp-meta').textContent=feat?`Lámina ${feat.lamina} · Cuadrante ${feat.cuadrante} · Sec. ${feat.sec}`:'';
+  document.getElementById('pp-path').textContent=`pdfs/${cod}/`;
+  if(feat?.imgUrl){ document.getElementById('pp-imgrow').style.display='flex'; document.getElementById('pp-imga').href=feat.imgUrl; }
+  else             { document.getElementById('pp-imgrow').style.display='none'; }
   renderPdfList();
-  document.querySelectorAll('.ritem').forEach(el=>el.classList.toggle('on',el.dataset.cod===cod));
-  document.querySelector(`.ritem[data-cod="${cod}"]`)?.scrollIntoView({block:'nearest'});
+  document.querySelectorAll('.ri').forEach(el=>el.classList.toggle('on',el.dataset.cod===cod));
+  document.querySelector(`.ri[data-cod="${cod}"]`)?.scrollIntoView({block:'nearest'});
 }
+function openPdfPanelFrom(cod){ selectFeat(cod); tab('pdfs'); }
 
-function openPdfPanelFrom(cod){
-  selectRec(cod);
-  tab('pdfs');
-}
-
-// ── LIST ─────────────────────────────────────────────────────────────────────
+// ─── LISTA ────────────────────────────────────────────────────────────────────
 function renderList(filter=''){
   const fl=filter.toLowerCase();
-  const items=S.records.filter(r=>!fl||r.cod.toLowerCase().includes(fl)||r.lamina.toLowerCase().includes(fl)||r.cuadrante.toLowerCase().includes(fl)||r.sec.includes(fl));
+  const items=S.features.filter(f=>!fl||f.cod.toLowerCase().includes(fl)||f.lamina.toLowerCase().includes(fl)||f.cuadrante.toLowerCase().includes(fl)||String(f.sec).includes(fl)||f.cdImagen.toLowerCase().includes(fl));
   const el=document.getElementById('rlist');
   if(!items.length){
-    el.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><p>${S.records.length?'Sin resultados':'Carga un Excel primero'}</p></div>`;
+    el.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><p>${S.features.length?'Sin resultados':'Cargando datos...'}</p></div>`;
     return;
   }
-  el.innerHTML=items.map(r=>{
-    const hasPdf=!!(S.pdfs[r.cod]?.length);
-    const hasImg=!!r.imgUrl;
-    const pdfN=(S.pdfs[r.cod]||[]).length;
-    const iconCls=hasPdf&&hasImg?'both':hasPdf?'haspdf':hasImg?'hasimg':'def';
-    return `<div class="ritem ${iconCls}" data-cod="${r.cod}" onclick="clickItem('${r.cod}')">
-      <div class="ri-ico ${iconCls}"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+  el.innerHTML=items.map(f=>{
+    const disk  = (S.diskPdfs[f.cod]||[]).length;
+    const local = (S.localPdfs[f.cod]||[]).length;
+    const total = disk+local;
+    const hasPdf= total>0;
+    const hasImg= !!f.imgUrl;
+    const iCls  = hasPdf&&hasImg?'c-both':hasPdf?'c-pdf':hasImg?'c-img':'c-def';
+    return `<div class="ri${f.cod===S.sel?' on':''}" data-cod="${f.cod}" onclick="clickItem('${f.cod}')">
+      <div class="ri-ico ${iCls}"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
       <div class="ri-body">
-        <div class="ri-cod">${r.cod}</div>
-        <div class="ri-meta">Lám. ${r.lamina} · Cuad. ${r.cuadrante} · Sec. ${r.sec}</div>
-        <div class="badges">
-          <span class="badge b-cad">${r.cdImagen||'—'}</span>
-          ${hasImg?'<span class="badge b-img">🖼️ Imagen</span>':''}
-          ${hasPdf?`<span class="badge b-pdf">📄 ${pdfN} PDF${pdfN>1?'s':''}</span>`:'<span class="badge b-no">Sin PDF</span>'}
+        <div class="ri-cod">${f.cod}</div>
+        <div class="ri-meta">Lám. ${f.lamina} · Cuad. ${f.cuadrante} · Sec. ${f.sec}</div>
+        <div class="bgs">
+          <span class="bg b-lam">${f.cdImagen}</span>
+          ${hasImg?'<span class="bg b-img">🖼 Imagen</span>':''}
+          ${hasPdf?`<span class="bg b-pdf">📄 ${total} PDF${total>1?'s':''}</span>`:'<span class="bg b-no">Sin PDF</span>'}
+          ${f.borrado?'<span class="bg b-del">⚠ Borrado</span>':''}
         </div>
       </div>
     </div>`;
@@ -517,151 +534,111 @@ function renderList(filter=''){
 }
 function filterList(v){renderList(v);}
 function clickItem(cod){
-  const r=S.records.find(x=>x.cod===cod);
-  if(!r)return;
-  S.map.setView([r.lat,r.lon],18);
-  r.marker.openPopup();
-  selectRec(cod);
+  const feat=S.features.find(f=>f.cod===cod);if(!feat)return;
+  S.map.setView([feat.lat,feat.lon],18);
+  feat.marker?.openPopup();
+  selectFeat(cod);
 }
 
-// ── PDFS ─────────────────────────────────────────────────────────────────────
+// ─── PDF GESTIÓN ──────────────────────────────────────────────────────────────
 function onPdfDrop(e){e.preventDefault();document.getElementById('pdrop').classList.remove('drag');addPdfs(e.dataTransfer.files);}
-async function addPdfs(files){
-  if(!S.sel){toast('⚠ Selecciona un predio primero','warn');return;}
-  const arr = Array.from(files).filter(f => f.name.toLowerCase().endsWith('.pdf'));
-  if (!arr.length) return;
-
-  if (S.serverMode) {
-    const fd = new FormData();
-    fd.append('cod', S.sel);
-    arr.forEach(f => fd.append('files[]', f));
-    try {
-      const r = await fetch(`${CFG.apiBase}/upload.php`, {method:'POST', body:fd});
-      const j = await r.json();
-      if (j.ok) {
-        toast(`✓ ${j.uploaded} PDF(s) guardados en pdfs/${S.sel}/`);
-        const r2 = await fetch(`${CFG.apiBase}/list.php?cod=${S.sel}`);
-        const j2 = await r2.json();
-        if (j2.ok) {
-          S.pdfs[S.sel] = j2.files;
-          renderPdfList();
-          refreshMarker(S.sel);
-          updateStats();
-          renderList(document.getElementById('sinput').value);
-        }
-      } else {
-        toast('✕ ' + (j.error || 'Error'), 'error');
-      }
-    } catch(e) {
-      toast('✕ Error de red', 'error');
-    }
-  } else {
-    arr.forEach(f => {
-      const rd = new FileReader();
-      rd.onload = function(e){
-        if(!S.pdfs[S.sel])S.pdfs[S.sel]=[];
-        S.pdfs[S.sel].push({name:f.name,size:f.size,dataUrl:e.target.result});
-        renderPdfList();
-        refreshMarker(S.sel);
-        updateStats();
-        renderList(document.getElementById('sinput').value);
-        toast(`✓ PDF guardado: ${f.name}`);
-      };
-      rd.readAsDataURL(f);
-    });
-  }
+function addPdfs(files){
+  if(!S.sel){toast('Selecciona un predio primero','warn');return;}
+  Array.from(files).forEach(f=>{
+    if(!f.name.toLowerCase().endsWith('.pdf')){toast(`${f.name} no es PDF`,'warn');return;}
+    const rd=new FileReader();
+    rd.onload=function(e){
+      if(!S.localPdfs[S.sel])S.localPdfs[S.sel]=[];
+      if(S.localPdfs[S.sel].some(p=>p.name===f.name)){toast(`Ya existe: ${f.name}`,'warn');return;}
+      S.localPdfs[S.sel].push({name:f.name,size:f.size,dataUrl:e.target.result});
+      renderPdfList();refreshMarker(S.sel);updateStats();
+      renderList(document.getElementById('si').value);
+      toast(`PDF guardado en sesión: ${f.name}`);
+    };
+    rd.readAsDataURL(f);
+  });
 }
 
 function renderPdfList(){
   const cod=S.sel;
-  const pdfs=S.pdfs[cod]||[];
-  const el=document.getElementById('plist');
-  if(!pdfs.length){
-    el.innerHTML=`<div class="no-pdf-msg">📂 Carpeta vacía · Sin archivos PDF</div>`;
+  const disk  = S.diskPdfs[cod]||[];
+  const local = S.localPdfs[cod]||[];
+  const total = disk.length+local.length;
+  document.getElementById('pp-cnt').textContent=`(${total})`;
+  const el=document.getElementById('pfiles');
+  if(!total){
+    el.innerHTML=`<div class="no-pdf">📂 Carpeta vacía · Sin archivos PDF<br><span style="font-size:10.5px">Arrastra PDFs o usa el botón de arriba</span></div>`;
     return;
   }
-  el.innerHTML=pdfs.map((p,i)=>`
-    <div class="pitem">
-      <div class="pitem-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-      <div style="flex:1;min-width:0"><div class="pitem-name">${p.name}</div><div class="pitem-kb">${(p.size/1024).toFixed(1)} KB</div></div>
-      <button class="ibtn" title="Ver" onclick="openPdf('${cod}',${i})"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-      <button class="ibtn del" title="Eliminar" onclick="delPdf('${cod}',${i})"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+  const diskHtml=disk.map(name=>`
+    <div class="pf">
+      <div class="pf-ico sys"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <div style="flex:1;min-width:0">
+        <div class="pf-name" title="${name}">${name}</div>
+        <div class="pf-kb">pdfs/${cod}/${name}</div>
+      </div>
+      <span class="pf-tag tag-disk">disco</span>
+      <a class="ib" href="pdfs/${cod}/${encodeURIComponent(name)}" target="_blank" title="Abrir PDF">
+        <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </a>
     </div>`).join('');
+
+  const localHtml=local.map((p,i)=>`
+    <div class="pf">
+      <div class="pf-ico pdf"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <div style="flex:1;min-width:0">
+        <div class="pf-name" title="${p.name}">${p.name}</div>
+        <div class="pf-kb">${(p.size/1024).toFixed(1)} KB · sesión</div>
+      </div>
+      <span class="pf-tag tag-local">sesión</span>
+      <button class="ib" title="Ver" onclick="openLocalPdf('${cod}',${i})">
+        <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+      <button class="ib del" title="Eliminar" onclick="delLocalPdf('${cod}',${i})">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+      </button>
+    </div>`).join('');
+
+  el.innerHTML=diskHtml+localHtml;
 }
 
-function openPdf(cod,i){
-  const p=(S.pdfs[cod]||[])[i];
-  if(!p)return;
-  if (p.dataUrl) {
-    const w=window.open();
-    w.document.write(`<iframe src="${p.dataUrl}" style="width:100%;height:100vh;border:none"></iframe>`);
-  } else if (p.url) {
-    window.open(p.url, '_blank');
-  }
+function openLocalPdf(cod,i){
+  const p=(S.localPdfs[cod]||[])[i];if(!p)return;
+  const w=window.open();w.document.write(`<iframe src="${p.dataUrl}" style="width:100%;height:100vh;border:none"></iframe>`);
+}
+function delLocalPdf(cod,i){
+  S.localPdfs[cod].splice(i,1);
+  renderPdfList();refreshMarker(cod);updateStats();
+  renderList(document.getElementById('si').value);
+  toast('PDF de sesión eliminado');
 }
 
-async function delPdf(cod,i){
-  const p = (S.pdfs[cod]||[])[i];
-  if (!p) return;
-
-  if (S.serverMode && p.name) {
-    try {
-      const r = await fetch(`${CFG.apiBase}/delete.php`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({cod, name: p.name})
-      });
-      const j = await r.json();
-      if (!j.ok) { toast('✕ Error al eliminar', 'error'); return; }
-    } catch(e) { toast('✕ Error de red', 'error'); return; }
-  }
-
-  S.pdfs[cod].splice(i,1);
-  renderPdfList();
-  refreshMarker(cod);
-  updateStats();
-  renderList(document.getElementById('sinput').value);
-  const r=S.records.find(x=>x.cod===cod);
-  if(r&&r.marker.isPopupOpen())r.marker.openPopup();
-  toast('✓ PDF eliminado');
-}
-
-function refreshMarker(cod){
-  const r=S.records.find(x=>x.cod===cod);
-  if(!r)return;
-  r.marker.setStyle(markerStyle(cod));
-  r.marker.bindPopup(()=>makePopup(cod),{maxWidth:310,minWidth:260});
-}
-
-// ── STATS ────────────────────────────────────────────────────────────────────
+// ─── STATS ────────────────────────────────────────────────────────────────────
 function updateStats(){
-  document.getElementById('stat-total').innerHTML=`<span>Predios: </span>${S.records.length}`;
-  const n=Object.keys(S.pdfs).filter(k=>S.pdfs[k]?.length).length;
-  document.getElementById('stat-pdf').innerHTML=`<span>Con PDF: </span>${n}`;
+  document.getElementById('chip-total').innerHTML=`<span>Predios: </span>${S.features.length}`;
+  const n=S.features.filter(f=>(S.diskPdfs[f.cod]?.length||0)+(S.localPdfs[f.cod]?.length||0)>0).length;
+  document.getElementById('chip-pdf').innerHTML=`<span>Con PDF: </span>${n}`;
 }
 
-// ── TOAST ────────────────────────────────────────────────────────────────────
-let tt;
+// ─── UTILIDADES ───────────────────────────────────────────────────────────────
+function setCard(id,type,title,body){
+  const el=document.getElementById(id);
+  el.className=`scard scard-${type}`;
+  el.querySelector('.ct').textContent=title;
+  el.querySelector('.cb').innerHTML=body;
+}
+let _tt;
 function toast(msg,type='ok'){
   const el=document.getElementById('toast');
-  el.textContent=msg;
-  el.style.background=type==='error'?'#b91c1c':type==='warn'?'#92400e':'#1e2535';
-  el.style.color='#fff';
-  el.classList.add('show');
-  clearTimeout(tt);
-  tt=setTimeout(()=>el.classList.remove('show'),2800);
+  el.textContent=(type==='warn'?'⚠ ':type==='err'?'✕ ':'✓ ')+msg;
+  el.style.background=type==='err'?'#b91c1c':type==='warn'?'#92400e':'#1e2535';
+  el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2800);
 }
-
-// ── DRAG EVENTS ──────────────────────────────────────────────────────────────
 document.getElementById('dz').addEventListener('dragover',e=>e.preventDefault());
 document.getElementById('pdrop').addEventListener('dragover',e=>e.preventDefault());
 
-// ── INIT ─────────────────────────────────────────────────────────────────────
-(async function init() {
-  await detectServerMode();
-  await autoLoadExcel();
-  await loadAllPdfsFromServer();
-})();
+// ─── INIT ────────────────────────────────────────────────────────────────────
+(async()=>{ await loadGeoJSON(); await loadDiskPdfs(); })();
 </script>
 </body>
 </html>
