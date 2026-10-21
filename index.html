@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AquaBot Sedapal</title>
+<style>
+  :root {
+    --azul: #0B5394;
+    --azul-oscuro: #073763;
+    --celeste: #e8f1fa;
+    --fondo: #f4f6f8;
+    --texto: #1f2933;
+    --gris: #6b7785;
+    --borde: #d9e0e7;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--fondo);
+    font-family: Arial, Helvetica, sans-serif;
+    color: var(--texto);
+    display: flex;
+    justify-content: center;
+  }
+  .app {
+    width: 100%;
+    max-width: 720px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    box-shadow: 0 0 24px rgba(0,0,0,.08);
+  }
+  header {
+    background: linear-gradient(135deg, var(--azul), var(--azul-oscuro));
+    color: #fff;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #fff; color: var(--azul);
+    display: grid; place-items: center;
+    font-size: 22px; flex: none;
+  }
+  header h1 { font-size: 17px; margin: 0; }
+  header p { font-size: 12px; margin: 2px 0 0; opacity: .85; }
+
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--fondo);
+  }
+  .msg {
+    max-width: 88%;
+    padding: 11px 14px;
+    border-radius: 14px;
+    font-size: 14.5px;
+    line-height: 1.5;
+    word-wrap: break-word;
+  }
+  .bot {
+    align-self: flex-start;
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-top-left-radius: 4px;
+  }
+  .user {
+    align-self: flex-end;
+    background: var(--azul);
+    color: #fff;
+    border-top-right-radius: 4px;
+  }
+  .msg ul { margin: 4px 0 0; padding-left: 20px; }
+  .msg li { margin: 2px 0; }
+  .campo { margin: 0 0 10px; }
+  .campo:last-child { margin-bottom: 0; }
+  .pendiente { color: var(--gris); font-style: italic; }
+
+  .escribiendo { display: flex; gap: 4px; padding: 14px; }
+  .escribiendo span {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--gris); opacity: .4;
+    animation: salto 1s infinite;
+  }
+  .escribiendo span:nth-child(2) { animation-delay: .15s; }
+  .escribiendo span:nth-child(3) { animation-delay: .3s; }
+  @keyframes salto { 0%,60%,100% { opacity: .3; transform: none; } 30% { opacity: 1; transform: translateY(-3px); } }
+
+  .sugerencias {
+    display: flex; gap: 8px; overflow-x: auto;
+    padding: 10px 16px 0; background: #fff;
+    border-top: 1px solid var(--borde);
+    min-height: 10px;
+  }
+  .sugerencias button {
+    flex: none;
+    border: 1px solid var(--azul);
+    background: var(--celeste);
+    color: var(--azul-oscuro);
+    border-radius: 18px;
+    padding: 7px 13px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .sugerencias button:hover { background: var(--azul); color: #fff; }
+
+  form {
+    display: flex; gap: 8px;
+    padding: 10px 16px 14px;
+    background: #fff;
+  }
+  input[type="text"] {
+    flex: 1;
+    border: 1px solid var(--borde);
+    border-radius: 22px;
+    padding: 11px 16px;
+    font-size: 15px;
+    outline: none;
+  }
+  input[type="text"]:focus { border-color: var(--azul); }
+  form button {
+    border: none; background: var(--azul); color: #fff;
+    border-radius: 22px; padding: 0 20px;
+    font-size: 14px; font-weight: bold; cursor: pointer;
+  }
+  form button:hover { background: var(--azul-oscuro); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">💧</div>
+    <div>
+      <h1>AquaBot Sedapal</h1>
+      <p>Factibilidad de Servicios de Agua Potable y Alcantarillado</p>
+    </div>
+  </header>
+
+  <div id="chat" aria-live="polite"></div>
+
+  <div class="sugerencias" id="sugerencias"></div>
+  <form id="formulario" autocomplete="off">
+    <input type="text" id="entrada" placeholder="Escribe tu consulta…" aria-label="Escribe tu consulta">
+    <button type="submit">Enviar</button>
+  </form>
+</div>
+
+<script>
+/* ============================================================
+   CONFIGURACIÓN
+   La base de datos se lee desde una hoja de Google Sheets.
+   REQUISITO: la hoja debe estar compartida como
+   "Cualquier persona con el enlace > Lector" (o publicada en la web),
+   de lo contrario el navegador no podrá leerla.
+   ============================================================ */
+const CONFIG = {
+  URL_SCRIPT: '',     // PEGA AQUÍ la URL de la aplicación web de Apps Script (termina en /exec). Vacío = solo motor local.
+  TIMEOUT_SEG: 25,    // Tiempo máximo de espera a la IA antes de usar el motor local de respaldo.
+  SPREADSHEET_ID: '1THM7DTCrboOimk3iZ43tFSyfTPwS7v3Q410om1Qxhmk',
+  GID: '',            // Opcional: ID de la pestaña principal (número tras "gid=" en la URL). Vacío = primera pestaña.
+  HOJA_FAQ: 'FAQ',    // Opcional: nombre de una 2.ª pestaña con columnas Tema | Palabras_Clave | Respuesta (costos, contactos, etc.). Si no existe, se ignora.
+  REFRESCO_SEG: 60,   // Cada cuántos segundos se vuelve a leer la hoja: lo que agregues en Excel aparece sin recargar la página.
+  COLUMNAS_OCULTAS: [] // Encabezados (en minúsculas, sin guiones bajos) que NO se mostrarán, ej.: ['estado observaciones']
+};
+
+const MSG_BIENVENIDA =
+  '¡Hola! Soy tu asistente para el trámite de Factibilidad de Servicios de Agua y Alcantarillado de Sedapal. ' +
+  '¿Sobre qué etapa o requisito necesitas orientación hoy? ' +
+  '(Por ejemplo: requisitos iniciales, pago de derechos, inspección ocular o plazos).';
+
+const MSG_DESCONOCIDO =
+  'Esa información no se encuentra contemplada en el procedimiento de factibilidad. ' +
+  'Te sugiero consultar a través de los canales oficiales de atención al usuario de Sedapal o su plataforma Aquanet.';
+
+const MSG_ERROR_BASE =
+  'En este momento no puedo consultar la base de datos del trámite. ' +
+  'Intenta nuevamente en unos minutos o consulta los canales oficiales de atención al usuario de Sedapal o su plataforma Aquanet.';
+
+const TEXTO_PENDIENTE = 'Dato no registrado en la base de datos.';
+
+/* Nombres de columna que se reconocen en la hoja (sin tildes, en minúsculas).
+   Basta con que el encabezado CONTENGA alguna de estas palabras. */
+const SINONIMOS = {
+  etapa:        ['etapa', 'fase'],
+  actividad:    ['actividad', 'procedimiento', 'paso', 'nombre'],
+  descripcion:  ['descripcion', 'detalle', 'resumen'],
+  requisitos:   ['requisito', 'documento', 'condicion'],
+  plazo:        ['plazo', 'dias', 'tiempo'],
+  palabras:     ['palabra', 'clave', 'keyword', 'sinonimo']
+};
+
+/* Palabras que los ciudadanos suelen usar para cada actividad (según la columna ID de la hoja).
+   Sirven para entender consultas como "¿cuánto cuesta?" o "requisitos para empezar".
+   Opcional: también se puede agregar una columna "Palabras_Clave" en la hoja. */
+const ALIAS_POR_ID = {
+  'ACT-01': ['requisito', 'inicial', 'iniciar', 'inicio', 'empezar', 'presentar', 'mesa de partes', 'admisibilidad', 'partida registral'],
+  'ACT-02': ['pago', 'pagar', 'derecho', 'costo', 'tarifa', 'cuanto cuesta', 'cuanto se paga', 'liquidacion', 'orden de pago', 'banco', 'abono'],
+  'ACT-03': ['inspeccion', 'ocular', 'visita', 'inspector', 'campo', 'contrastacion'],
+  'ACT-04': ['evaluacion', 'hidraulica', 'caudal', 'presion', 'capacidad', 'calculo', 'memoria', 'ingeniero', 'dotacion'],
+  'ACT-05': ['certificado', 'dictamen', 'favorable', 'condicionada', 'resultado', 'respuesta', 'plazo total', 'tiempo total'],
+  'ACT-06': ['proyecto', 'redes', 'expediente tecnico', 'autocad', 'habilitacion urbana', 'independizacion', 'ampliacion'],
+  'ACT-07': ['recurso', 'impugnacion', 'impugnar', 'observacion', 'reconsideracion', 'apelar', 'apelacion', 'denegatoria', 'denegada', 'subsanar']
+};
+
+let BASE = [];
+let DF = {};          // en cuántas actividades aparece cada palabra clave
+let errorBase = null;
+
+/* ---------- Utilidades ---------- */
+const chat = document.getElementById('chat');
+const entrada = document.getElementById('entrada');
+
+function normalizar(t) {
+  return String(t == null ? '' : t).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9ñ\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function esSaludo(t) {
+  const n = normalizar(t);
+  return /^(hola|holi|buenas|buenos dias|buen dia|buenas tardes|buenas noches|que tal|saludos|hey|hi)\b/.test(n);
+}
+
+/* ---------- Lectura de la hoja de Google ---------- */
+function parseCSV(texto) {
+  if (texto.charCodeAt(0) === 0xFEFF) texto = texto.slice(1);
+  const filas = [];
+  let fila = [], campo = '', entreComillas = false;
+  for (let i = 0; i < texto.length; i++) {
+    const c = texto[i];
+    if (entreComillas) {
+      if (c === '"' && texto[i + 1] === '"') { campo += '"'; i++; }
+      else if (c === '"') { entreComillas = false; }
+      else { campo += c; }
+    } else if (c === '"') {
+      entreComillas = true;
+    } else if (c === ',') {
+      fila.push(campo); campo = '';
+    } else if (c === '\n' || c === '\r') {
+      if (c === '\r' && texto[i + 1] === '\n') i++;
+      fila.push(campo); campo = '';
+      filas.push(fila); fila = [];
+    } else {
+      campo += c;
+    }
+  }
+  if (campo !== '' || fila.length) { fila.push(campo); filas.push(fila); }
+  return filas;
+}
+
+function indiceColumna(cabeceras, lista, usadas) {
+  for (let i = 0; i < cabeceras.length; i++) {
+    if (usadas.has(i)) continue;
+    if (lista.some(function (w) { return cabeceras[i].indexOf(w) !== -1; })) {
+      usadas.add(i);
+      return i;
+    }
+  }
+  return -1;
+}
+
+/* Palabras demasiado generales (el tema completo es la factibilidad): no sirven para distinguir actividades */
+const PALABRAS_VACIAS = [
+  'de', 'del', 'la', 'las', 'los', 'el', 'para', 'con', 'por', 'una', 'uno', 'que', 'y', 'o', 'en', 'al',
+  'factibilidad', 'servicio', 'servicios', 'sedapal', 'tramite', 'agua', 'potable', 'alcantarillado', 'solicitud'
+];
+
+function palabrasAutomaticas(texto) {
+  const lista = [];
+  normalizar(texto).split(' ').forEach(function (p) {
+    if (p.length > 3 && PALABRAS_VACIAS.indexOf(p) === -1 && !/^\d+$/.test(p)) {
+      lista.push(p);
+      if (p.length > 5 && p.slice(-1) === 's') lista.push(p.slice(0, -1));
+    }
+  });
+  return lista;
+}
+
+/* Separa los requisitos por coma (sin cortar lo que está entre paréntesis), punto y coma o salto de línea */
+function separarRequisitos(texto) {
+  const items = [];
+  let actual = '', profundidad = 0;
+  for (let i = 0; i < texto.length; i++) {
+    const c = texto[i];
+    if (c === '(') profundidad++;
+    if (c === ')' && profundidad > 0) profundidad--;
+    if ((c === ',' && profundidad === 0) || c === ';' || c === '\n' || c === '•' || c === '|') {
+      items.push(actual);
+      actual = '';
+    } else {
+      actual += c;
+    }
+  }
+  items.push(actual);
+  return items
+    .map(function (r) { return r.replace(/^[-*\s]+/, '').trim(); })
+    .filter(Boolean)
+    .map(function (r) { return r.charAt(0).toUpperCase() + r.slice(1); });
+}
+
+function construirBase(filas) {
+  if (filas.length < 2) throw new Error('La hoja no tiene datos.');
+  const cab = filas[0].map(normalizar);
+  const usadas = new Set();
+
+  const col = {};
+  col.id = cab.findIndex(function (h) { return h === 'id' || h === 'codigo'; });
+  if (col.id !== -1) usadas.add(col.id);
+  col.etapa       = indiceColumna(cab, SINONIMOS.etapa, usadas);
+  col.actividad   = indiceColumna(cab, SINONIMOS.actividad, usadas);
+  col.descripcion = indiceColumna(cab, SINONIMOS.descripcion, usadas);
+  col.requisitos  = indiceColumna(cab, SINONIMOS.requisitos, usadas);
+  col.plazo       = indiceColumna(cab, SINONIMOS.plazo, usadas);
+  col.palabras    = indiceColumna(cab, SINONIMOS.palabras, usadas);
+
+  if (col.etapa === -1 && col.actividad !== -1) { col.etapa = col.actividad; col.actividad = -1; }
+  if (col.etapa === -1) {
+    throw new Error('No se encontró la columna de etapa/actividad en la hoja.');
+  }
+
+  const celda = function (f, i) { return i === -1 || f[i] == null ? '' : String(f[i]).trim(); };
+
+  /* Cualquier columna nueva que agregues en la hoja se muestra automáticamente en la respuesta */
+  const extrasCol = [];
+  filas[0].forEach(function (h, i) {
+    const titulo = String(h).trim().replace(/_/g, ' ');
+    if (!usadas.has(i) && titulo && CONFIG.COLUMNAS_OCULTAS.indexOf(normalizar(titulo)) === -1) {
+      extrasCol.push({ i: i, titulo: titulo });
+    }
+  });
+
+  return filas.slice(1).map(function (f) {
+    const etapa = celda(f, col.etapa);
+    if (!etapa) return null;
+    const actividad = celda(f, col.actividad);
+    const id = celda(f, col.id).toUpperCase();
+
+    const manuales = celda(f, col.palabras).split(/,|;|\n/).map(normalizar).filter(Boolean);
+    const alias = (ALIAS_POR_ID[id] || []).map(normalizar);
+    const todas = manuales.concat(alias, palabrasAutomaticas(etapa), palabrasAutomaticas(actividad));
+
+    return {
+      id: id,
+      etapa: etapa,
+      actividad: actividad,
+      descripcion: celda(f, col.descripcion),
+      requisitos: separarRequisitos(celda(f, col.requisitos)),
+      plazo: celda(f, col.plazo),
+      extras: extrasCol.map(function (e) { return { titulo: e.titulo, valor: celda(f, e.i) }; })
+        .filter(function (e) { return e.valor; }),
+      palabras: todas.filter(function (w, i) { return todas.indexOf(w) === i; }),
+      etapaNorm: normalizar(etapa),
+      actividadNorm: normalizar(actividad)
+    };
+  }).filter(Boolean);
+}
+
+function calcularDF() {
+  DF = {};
+  BASE.forEach(function (item) {
+    item.palabras.forEach(function (w) { DF[w] = (DF[w] || 0) + 1; });
+  });
+}
+
+/* Pestaña opcional de preguntas frecuentes: Tema | Palabras_Clave | Respuesta */
+let FAQ = [];
+function construirFaq(filas) {
+  if (filas.length < 2) return [];
+  const cab = filas[0].map(normalizar);
+  const iT = cab.findIndex(function (h) { return h.indexOf('tema') !== -1 || h.indexOf('pregunta') !== -1; });
+  const iR = cab.findIndex(function (h) { return h.indexOf('respuesta') !== -1; });
+  const iK = cab.findIndex(function (h) { return h.indexOf('palabra') !== -1 || h.indexOf('clave') !== -1; });
+  if (iT === -1 || iR === -1) return [];   // no es una hoja de preguntas frecuentes
+  return filas.slice(1).map(function (f) {
+    const tema = String(f[iT] || '').trim(), respuesta = String(f[iR] || '').trim();
+    if (!tema || !respuesta) return null;
+    const manuales = String(iK === -1 ? '' : f[iK] || '').split(/,|;|\n/).map(normalizar).filter(Boolean);
+    const todas = manuales.concat(palabrasAutomaticas(tema));
+    return {
+      tema: tema, respuesta: respuesta, temaNorm: normalizar(tema),
+      palabras: todas.filter(function (w, i) { return todas.indexOf(w) === i; })
+    };
+  }).filter(Boolean);
+}
+
+async function pedirCSV(extra) {
+  const url = 'https://docs.google.com/spreadsheets/d/' + CONFIG.SPREADSHEET_ID + '/gviz/tq?tqx=out:csv' + extra;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const texto = await resp.text();
+  if (/^\s*</.test(texto)) {
+    throw new Error('La hoja no es pública (se recibió una página de inicio de sesión).');
+  }
+  return texto;
+}
+
+/* Copia de la hoja SEDAPAL, usada solo si no se puede leer la hoja en línea */
+const SNAPSHOT_CSV = "ID,Etapa,Actividad,Descripcion_Detallada,Requisitos_Documentos,Plazo_Estimado,Estado_Observaciones\nACT-01,1. Presentación y Admisibilidad,Ingreso de Solicitud y Validación Formal,El administrado o apoderado presenta la solicitud formal de Factibilidad de Servicios de Agua Potable y Alcantarillado por Mesa de Partes Virtual de Sedapal o centros zonales. Se revisa la admisibilidad de títulos y planos.,\"Formato N° 1 firmado, Copia simple de DNI o vigencia de poder (PJ), Copia Literal de Partida Registral (máx. 30 días de emitida), Plano de Ubicación a escala 1:500 o 1:1000 en coordenadas UTM (WGS84).\",3 días hábiles,Obligatorio\nACT-02,2. Liquidación y Pago,Emisión de Orden de Pago y Abono por Trámite,\"Sedapal emite la orden de liquidación por concepto de derechos de trámite de evaluación y factibilidad de servicios, conforme al tarifario vigente autorizado por SUNASS. El usuario cuenta con plazo perentorio para efectuar el pago.\",\"Código de liquidación generado, abono en agentes o bancos autorizados (BCP, BBVA, Interbank, Scotiabank) o pasarela en línea de Sedapal.\",2 días hábiles para pago,Indispensable\nACT-03,3. Inspección de Campo,Inspección Ocular Técnica y Contrastación In-Situ,\"Un inspector de la Gerencia de Servicio de Sedapal visita el lote para constatar la existencia de tuberías matrices de agua, colectores de desagüe, presiones, cotas topográficas y viabilidad de empalme.\",\"Presencia del titular o representante acreditado durante la visita técnica, libre acceso al frontis y vereda del predio.\",5 a 7 días hábiles,Técnico\nACT-04,4. Evaluación Técnica e Hidráulica,\"Cálculo de Caudales, Presión y Capacidad Operativa\",Los ingenieros sanitarios de Sedapal modelan la demanda solicitada (caudal promedio y máximo horario) contrastándola con la capacidad hidráulica de reservorios y redes matrices para verificar si el sistema abastece sin desabastecer la zona.,\"Plano de Instalaciones Sanitarias firmado por Ingeniero Sanitario colegiado y habilitado, Memoria de Cálculo Hidráulico y estimación de dotación diaria.\",8 a 10 días hábiles,Ingeniería\nACT-05,5. Dictamen y Factibilidad,Emisión del Certificado de Factibilidad de Servicios,\"Pronunciamiento final de Sedapal: a) Factibilidad Favorable (especifica punto de empalme, presión de agua y diámetro de colector); b) Factibilidad Condicionada (exige ejecución previa de refuerzos de red o expediente de ampliación); o c) No Favorable por falta de redes.\",Aprobación de la inspección ocular y viabilidad técnica de caudal.,15 a 20 días hábiles (Plazo Total),Concluyente\nACT-06,6. Elaboración de Proyectos,Presentación y Aprobación de Proyecto de Redes,Aplica cuando la factibilidad fue condicionada o para habilitaciones urbanas e independizaciones donde se requiera extender colectores o tuberías de distribución pública.,Expediente técnico completo en formato digital (AutoCAD DWG) y memorias descriptivas selladas por ingeniero sanitario habilitado.,15 días hábiles para revisión,Proyectos Mayores\nACT-07,6. Recursos e Impugnación,Atención de Observaciones o Recursos Administrativos,\"En caso de denegatoria u observaciones técnicas, el usuario puede subsanar documentación o interponer recurso de reconsideración sustentado con nuevo peritaje técnico dentro de los 15 días hábiles.\",Escrito fundamentado conforme a la Ley del Procedimiento Administrativo General (Ley 27444) adjuntando nuevo informe técnico.,15 días hábiles para resolución,Opcional\n";
+
+let ultimaCarga = 0, cargando = null;
+
+async function cargarBase() {
+  let texto;
+  try { texto = await pedirCSV(CONFIG.GID ? '&gid=' + encodeURIComponent(CONFIG.GID) : ''); }
+  catch (e) { texto = SNAPSHOT_CSV; }   // sin acceso a Google Sheets (p. ej. página publicada): copia de la hoja
+  const nueva = construirBase(parseCSV(texto));
+  if (!nueva.length) throw new Error('La hoja no contiene etapas.');
+  BASE = nueva;
+  calcularDF();
+  FAQ = [];
+  if (CONFIG.HOJA_FAQ) {
+    try { FAQ = construirFaq(parseCSV(await pedirCSV('&sheet=' + encodeURIComponent(CONFIG.HOJA_FAQ)))); }
+    catch (e) { FAQ = []; }
+  }
+  ultimaCarga = Date.now();
+}
+
+/* Lee la hoja si aún no se leyó o si pasó el tiempo de refresco; si falla, conserva los datos anteriores */
+function asegurarBase() {
+  if (cargando) return cargando;
+  if (BASE.length && Date.now() - ultimaCarga < CONFIG.REFRESCO_SEG * 1000) return Promise.resolve();
+  cargando = cargarBase()
+    .then(function () { errorBase = null; pintarSugerencias(); })
+    .catch(function (err) {
+      if (!BASE.length) errorBase = err;
+      console.error('Error al cargar la base de datos:', err);
+    })
+    .then(function () { cargando = null; });
+  return cargando;
+}
+
+function pintarSugerencias() {
+  const cont = document.getElementById('sugerencias');
+  cont.innerHTML = '';
+  BASE.slice(0, 8).forEach(function (item) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = item.etapa;
+    b.addEventListener('click', function () { procesar(item.etapa); });
+    cont.appendChild(b);
+  });
+}
+
+/* ---------- Búsqueda ---------- */
+/* Las palabras que aparecen en varias actividades pesan menos; se exige un puntaje mínimo de 1
+   para no mostrar una etapa por coincidencias débiles. */
+function buscarEtapa(t) {
+  const n = ' ' + normalizar(t) + ' ';
+  let mejor = null, puntaje = 0;
+  BASE.forEach(function (item) {
+    let p = 0;
+    if (item.etapaNorm && n.indexOf(item.etapaNorm) !== -1) p += 5;
+    if (item.actividadNorm && n.indexOf(item.actividadNorm) !== -1) p += 5;
+    item.palabras.forEach(function (w) {
+      if (w && n.indexOf(w) !== -1) {
+        p += (w.indexOf(' ') !== -1 ? 2 : 1) / (DF[w] || 1);
+      }
+    });
+    if (p > puntaje) { puntaje = p; mejor = item; }
+  });
+  return puntaje >= 1 ? mejor : null;
+}
+
+function pidePlazos(t) {
+  return /\b(plazo|plazos|cuanto demora|cuanto tarda|cuantos dias|cuanto tiempo|tiempo de atencion)\b/.test(normalizar(t));
+}
+
+function pideEtapas(t) {
+  return /\b(etapa|etapas|pasos|fases|proceso|procedimiento)\b/.test(normalizar(t));
+}
+
+/* Temas de Sedapal que NO son la factibilidad (evita confundir, por ejemplo, "pago del recibo" con "pago de derechos") */
+const FUERA_DE_TEMA = /\b(recibo|recibos|fuga|fugas|averia|averias|corte|cortes|medidor|facturacion|deuda|sin agua)\b/;
+
+/* Decide qué responder a una consulta */
+function buscarFaq(t) {
+  const n = ' ' + normalizar(t) + ' ';
+  let mejor = null, puntaje = 0;
+  FAQ.forEach(function (item) {
+    let p = item.temaNorm && n.indexOf(item.temaNorm) !== -1 ? 5 : 0;
+    item.palabras.forEach(function (w) {
+      if (w && n.indexOf(w) !== -1) p += w.indexOf(' ') !== -1 ? 2 : 1;
+    });
+    if (p > puntaje) { puntaje = p; mejor = item; }
+  });
+  return { item: mejor, puntaje: puntaje };
+}
+
+function clasificar(t) {
+  const f = buscarFaq(t);
+  if (f.item && f.puntaje >= 2) return { tipo: 'faq', faq: f.item };
+  if (FUERA_DE_TEMA.test(normalizar(t))) return { tipo: 'desconocido' };
+  const etapa = buscarEtapa(t);
+  if (etapa) return { tipo: 'etapa', etapa: etapa };
+  if (f.item) return { tipo: 'faq', faq: f.item };
+  if (pidePlazos(t)) return { tipo: 'plazos' };
+  if (pideEtapas(t)) return { tipo: 'etapas' };
+  return { tipo: 'desconocido' };
+}
+
+/* ---------- Render ---------- */
+function agregarMensaje(clase) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + clase;
+  chat.appendChild(div);
+  return div;
+}
+function bajar() { chat.scrollTop = chat.scrollHeight; }
+
+function mensajeUsuario(texto) {
+  agregarMensaje('user').textContent = texto;
+  bajar();
+}
+
+function mensajeBotTexto(texto) {
+  agregarMensaje('bot').textContent = texto;
+  bajar();
+}
+
+function campo(contenedor, titulo, valor) {
+  const p = document.createElement('div');
+  p.className = 'campo';
+  const b = document.createElement('strong');
+  b.textContent = titulo + ': ';
+  p.appendChild(b);
+  if (valor) {
+    p.appendChild(document.createTextNode(valor));
+  } else {
+    const s = document.createElement('span');
+    s.className = 'pendiente';
+    s.textContent = TEXTO_PENDIENTE;
+    p.appendChild(s);
+  }
+  contenedor.appendChild(p);
+}
+
+function mensajeBotEtapa(item) {
+  const div = agregarMensaje('bot');
+  campo(div, 'Etapa / Actividad', item.actividad ? item.etapa + ' — ' + item.actividad : item.etapa);
+  campo(div, 'Descripción', item.descripcion);
+
+  const req = document.createElement('div');
+  req.className = 'campo';
+  const t = document.createElement('strong');
+  t.textContent = 'Requisitos exigibles:';
+  req.appendChild(t);
+  if (item.requisitos.length) {
+    const ul = document.createElement('ul');
+    item.requisitos.forEach(function (r) {
+      const li = document.createElement('li');
+      li.textContent = r;
+      ul.appendChild(li);
+    });
+    req.appendChild(ul);
+  } else {
+    req.appendChild(document.createElement('br'));
+    const s = document.createElement('span');
+    s.className = 'pendiente';
+    s.textContent = TEXTO_PENDIENTE;
+    req.appendChild(s);
+  }
+  div.appendChild(req);
+
+  campo(div, 'Plazo estimado', item.plazo);
+  item.extras.forEach(function (e) { campo(div, e.titulo, e.valor); });
+  bajar();
+}
+
+function mensajeBotFaq(item) {
+  const div = agregarMensaje('bot');
+  campo(div, 'Tema', item.tema);
+  const r = document.createElement('div');
+  r.className = 'campo';
+  r.style.whiteSpace = 'pre-line';
+  r.textContent = item.respuesta;
+  div.appendChild(r);
+  bajar();
+}
+
+function mensajeBotLista(titulo, lineas, cierre) {
+  const div = agregarMensaje('bot');
+  const t = document.createElement('strong');
+  t.textContent = titulo;
+  div.appendChild(t);
+  const ul = document.createElement('ul');
+  lineas.forEach(function (l) {
+    const li = document.createElement('li');
+    li.textContent = l;
+    ul.appendChild(li);
+  });
+  div.appendChild(ul);
+  if (cierre) {
+    const p = document.createElement('div');
+    p.className = 'campo';
+    p.style.marginTop = '10px';
+    p.textContent = cierre;
+    div.appendChild(p);
+  }
+  bajar();
+}
+
+function mensajeBotResumenPlazos() {
+  const lineas = BASE.filter(function (i) { return i.plazo; }).map(function (i) {
+    return i.etapa + ': ' + i.plazo;
+  });
+  mensajeBotLista('Plazos estimados por etapa:', lineas,
+    'Indícame una etapa para ver su detalle completo.');
+}
+
+function mensajeBotListaEtapas() {
+  const lineas = BASE.map(function (i) {
+    return i.actividad ? i.etapa + ' — ' + i.actividad : i.etapa;
+  });
+  mensajeBotLista('Etapas del trámite de factibilidad:', lineas,
+    'Indícame cuál te interesa para ver sus requisitos y plazo.');
+}
+
+/* ---------- Conexión con la IA (Apps Script + Gemini) ---------- */
+let historial = [];      // [{ rol: 'user' | 'bot', texto }]
+let ocupado = false;
+
+async function consultarIA(pregunta) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(function () { ctrl.abort(); }, CONFIG.TIMEOUT_SEG * 1000);
+  try {
+    /* text/plain evita el "preflight" CORS, que Apps Script no soporta */
+    const resp = await fetch(CONFIG.URL_SCRIPT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ pregunta: pregunta, historial: historial }),
+      signal: ctrl.signal
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const d = await resp.json();
+    if (d.error) throw new Error(d.error);
+    if (!d.respuesta) throw new Error('Respuesta vacía');
+    return String(d.respuesta);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/* Convierte **negritas** en <strong> sin usar innerHTML (seguro) */
+function textoConNegritas(padre, texto) {
+  const re = /\*\*(.+?)\*\*/g;
+  let ultimo = 0, m;
+  while ((m = re.exec(texto)) !== null) {
+    if (m.index > ultimo) padre.appendChild(document.createTextNode(texto.slice(ultimo, m.index)));
+    const b = document.createElement('strong');
+    b.textContent = m[1];
+    padre.appendChild(b);
+    ultimo = re.lastIndex;
+  }
+  if (ultimo < texto.length) padre.appendChild(document.createTextNode(texto.slice(ultimo)));
+}
+
+/* Muestra la respuesta de la IA: viñetas (* o -) y negritas (**) */
+function mensajeBotMarkdown(texto) {
+  const div = agregarMensaje('bot');
+  let ul = null;
+  texto.split(/\r?\n/).forEach(function (linea) {
+    const l = linea.trim();
+    if (!l) { ul = null; return; }
+    const v = l.match(/^[\*\-•]\s+(.*)$/);
+    if (v) {
+      if (!ul) { ul = document.createElement('ul'); div.appendChild(ul); }
+      const li = document.createElement('li');
+      textoConNegritas(li, v[1]);
+      ul.appendChild(li);
+    } else {
+      ul = null;
+      const p = document.createElement('div');
+      p.className = 'campo';
+      textoConNegritas(p, l);
+      div.appendChild(p);
+    }
+  });
+  bajar();
+}
+
+function responderLocal(texto) {
+  if (errorBase) { mensajeBotTexto(MSG_ERROR_BASE); return; }
+  const r = clasificar(texto);
+  if (r.tipo === 'etapa') mensajeBotEtapa(r.etapa);
+  else if (r.tipo === 'faq') mensajeBotFaq(r.faq);
+  else if (r.tipo === 'plazos') mensajeBotResumenPlazos();
+  else if (r.tipo === 'etapas') mensajeBotListaEtapas();
+  else mensajeBotTexto(MSG_DESCONOCIDO);
+}
+
+/* ---------- Conversación ---------- */
+asegurarBase();
+
+async function procesar(texto) {
+  texto = texto.trim();
+  if (!texto || ocupado) return;
+  ocupado = true;
+  mensajeUsuario(texto);
+
+  const typing = agregarMensaje('bot');
+  typing.classList.add('escribiendo');
+  typing.innerHTML = '<span></span><span></span><span></span>';
+  bajar();
+
+  try {
+    if (esSaludo(texto)) {
+      await new Promise(function (r) { setTimeout(r, 400); });
+      typing.remove();
+      mensajeBotTexto(MSG_BIENVENIDA);
+      return;
+    }
+
+    let respuesta = null;
+    if (CONFIG.URL_SCRIPT) {
+      try { respuesta = await consultarIA(texto); }
+      catch (err) { console.error('Falló la IA, se usa el motor local:', err); }
+    }
+
+    if (respuesta) {
+      typing.remove();
+      mensajeBotMarkdown(respuesta);
+      historial.push({ rol: 'user', texto: texto }, { rol: 'bot', texto: respuesta });
+      historial = historial.slice(-12);
+      return;
+    }
+
+    /* Respaldo: motor local basado en la hoja */
+    await asegurarBase();
+    typing.remove();
+    responderLocal(texto);
+  } finally {
+    ocupado = false;
+  }
+}
+
+document.getElementById('formulario').addEventListener('submit', function (ev) {
+  ev.preventDefault();
+  const valor = entrada.value;
+  entrada.value = '';
+  procesar(valor);
+});
+
+mensajeBotTexto(MSG_BIENVENIDA);
+</script>
+</body>
+</html>
